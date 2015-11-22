@@ -19,6 +19,9 @@ class Socket_Master
         int send(void* data, int numOfBytes, SocketAddressLocal* dest);
         int send(void* data, int numOfBytes, SocketAddressNetwork* dest);
 
+        SocketIO_Network* getNetworkSocket();
+        SocketIO_Local* getLocalSocket();
+
         std::string getUniqueID();
 
         void broadcast();

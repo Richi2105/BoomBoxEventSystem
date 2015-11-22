@@ -32,7 +32,7 @@ class Socket_Slave
 
         SocketIO* socket;
 
-        void getAddressFromSharedMemory(SocketAddressLocal* address);
+        void getAddressFromSharedMemory(SocketAddressLocal** address);
 };
 
 #endif // SOCKETREADERSLAVE_H

@@ -33,9 +33,12 @@ void Socket_Master::broadcast()
 {
     printf("broadcasting...\n");
     int fd;
-
-//    fd = shm_open("/shm_EventSystemSHM", O_RDWR, S_IRUSR | S_IWUSR);
+#ifdef RASPBERRY
     fd = shmget((key_t) 4321, sizeof(SocketAddressLocal), 0666 | IPC_CREAT);
+#else
+    fd = shm_open("/shm_EventSystemSHM", O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+#endif //RASPBERRY
+
 	if (fd == -1)
 	{
 		fprintf(stderr, "Error: shm_open()\n");
@@ -44,23 +47,41 @@ void Socket_Master::broadcast()
 	printf("File Descriptor to /shm_EventSystemSHM: %d\n", fd);
 	ftruncate(fd, sizeof(SocketAddressLocal));
 
-//	this->mapAddress = mmap(NULL, sizeof(SocketAddressLocal), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+#ifdef RASPBERRY
 	this->mapAddress = shmat(fd, NULL, 0);
+#else
+	this->mapAddress = mmap(NULL, sizeof(SocketAddressLocal), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+#endif //RASPBERRY
+
 	if (mapAddress == MAP_FAILED || mapAddress == NULL)
     {
         fprintf(stderr, "Error: mmap()\n");
 		exit(1);
     }
-//    memset(mapAddress, 0, sizeof(SocketAddress<sockaddr_un>));
+
+#ifndef RASPBERRY
+    memset(mapAddress, 0, sizeof(SocketAddressLocal));
+#endif //RASPBERRY
 
 
     SocketAddressLocal* esaddress = (SocketAddressLocal*) mapAddress;
+    struct sockaddr_un* sockaddr = (sockaddr_un*) ((this->localSocket->getAddress()->getAddress()));
 
-    esaddress->setAddress(*(sockaddr_un*)(this->localSocket->getAddress()->getAddress()), this->localSocket->getAddress()->getLen());
+    esaddress->setAddress(*sockaddr, this->localSocket->getAddress()->getLen());
 
-    printf("path to me: %s, with len %d\n", ((sockaddr_un*)((SocketAddressLocal*)mapAddress)->getAddress())->sun_path, esaddress->getLen());
+//    printf("path to me: %s, with len %d\n", ((sockaddr_un*)((SocketAddressLocal*)mapAddress)->getAddress())->sun_path, esaddress->getLen());
 
     close(fd);
+}
+
+SocketIO_Local* Socket_Master::getLocalSocket()
+{
+	return this->localSocket;
+}
+
+SocketIO_Network* Socket_Master::getNetworkSocket()
+{
+	return this->networkSocket;
 }
 
 int Socket_Master::send(void* data, int numOfBytes, SocketAddressLocal* dest)
@@ -71,6 +92,6 @@ int Socket_Master::send(void* data, int numOfBytes, SocketAddressLocal* dest)
 
 int Socket_Master::send(void* data, int numOfBytes, SocketAddressNetwork* dest)
 {
-    printf("Sending to: %s\n", ((sockaddr_in*)dest->getAddress())->sin_addr);
+    printf("Sending to: %d\n", ((sockaddr_in*)dest->getAddress())->sin_addr.s_addr);
     return sendto(this->networkSocket->getSocketFileDescriptor(), data, numOfBytes, 0, dest->getAddress(), dest->getLen());
 }

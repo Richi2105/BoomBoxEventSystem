@@ -11,6 +11,7 @@
 #include "../include/Telegram/Telegram_Register.h"
 
 #include "../include/EventSystemMaster.h"
+#include "../include/EventSystemParticipant.h"
 
 bool stringCompare(const char* str1, const char* str2)
 {
@@ -105,7 +106,11 @@ std::string EventSystemMaster::getUniqueIdentifier()
 }
 SocketIO* EventSystemMaster::getSocket()
 {
-    return nullptr;
+    return (SocketIO*)this->master.getLocalSocket();
+}
+SocketAddress* EventSystemMaster::getAddress()
+{
+	return this->master.getNetworkSocket()->getAddress();
 }
 
 void* EventSystemMaster::getDataPointer()

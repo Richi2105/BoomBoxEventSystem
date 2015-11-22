@@ -31,6 +31,7 @@ class EventSystemMaster : public EventSystemParticipant
         std::string getIdentifier();
         std::string getUniqueIdentifier();
         virtual SocketIO* getSocket();
+        virtual SocketAddress* getAddress();
         void addClient(std::string id, SocketAddressLocal address);
         void addClient(std::string id, SocketAddressNetwork address);
         void sendToClient(std::string destination, Telegram* data);

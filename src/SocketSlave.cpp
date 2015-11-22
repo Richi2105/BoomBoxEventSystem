@@ -23,7 +23,8 @@ Socket_Slave::Socket_Slave()
 {
     this->socket = new SocketIO_Local();
     this->masterAddress = new SocketAddressLocal();
-    this->getAddressFromSharedMemory((SocketAddressLocal*)this->masterAddress);
+    this->getAddressFromSharedMemory(((SocketAddressLocal**)&this->masterAddress));
+    printf("Master Address: %s\n", ((sockaddr_un*)((SocketAddressLocal*)this->masterAddress)->getAddress())->sun_path);
     this->local = true;
 }
 
@@ -80,15 +81,18 @@ void Socket_Slave::connect(std::string id)
     		printf("Telegram initialized, source is %s\n", ((Telegram_Register*)telegram)->getClientID());
     	}
 
-    	this->send((void*) telegram, telegram->getSize());
+    	this->send((void*) telegram, telegram->getSize()+10);
     }
 }
 
-void Socket_Slave::getAddressFromSharedMemory(SocketAddressLocal* address)
+void Socket_Slave::getAddressFromSharedMemory(SocketAddressLocal** address)
 {
 	int fd;
+#ifdef RASPBERRY
 	fd = shmget((key_t)4321, sizeof(SocketAddressLocal), 0444);
-//    fd = shm_open("/shm_EventSystemSHM", O_RDONLY, S_IRUSR | S_IWUSR);
+#else
+    fd = shm_open("/shm_EventSystemSHM", O_RDWR, S_IRUSR | S_IWUSR);
+#endif //RASPBERRY
 	if (fd == -1)
 	{
 		fprintf(stderr, "Error: shm_open()\n");
@@ -96,18 +100,27 @@ void Socket_Slave::getAddressFromSharedMemory(SocketAddressLocal* address)
 	}
 	printf("File Descriptor to /shm_EventSystemSHM: %d\n", fd);
 
-//	void* mapAddress = mmap(NULL, sizeof(SocketAddressLocal), PROT_READ, MAP_SHARED, fd, 0);
-	void * mapAddress = shmat(fd, NULL, 0);
+#ifdef RASPBERRY
+	void* mapAddress = shmat(fd, NULL, 0);
+#else
+	void* mapAddress = mmap(NULL, sizeof(SocketAddressLocal), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+#endif //RASPBERRY
+
 	if (mapAddress == MAP_FAILED || mapAddress == NULL)
 	{
 		fprintf(stderr, "Error: mmap()\n");
 		exit(1);
 	}
+	printf("mapAddress: %p\n", mapAddress);
 
-	SocketAddressLocal* esaddress = (SocketAddressLocal*) mapAddress;
-	address->setAddress((*(sockaddr_un*)esaddress->getAddress()), esaddress->getLen());
+	(*address) = new SocketAddressLocal(*(SocketAddressLocal*) mapAddress);
 
-	printf("connected to: %s, with len %d\n", ((sockaddr_un*)((SocketAddressLocal*)mapAddress)->getAddress())->sun_path, ((SocketAddressLocal*)mapAddress)->getLen());
+	printf("%s\n", ((sockaddr_un*)(*address)->getAddress())->sun_path);
+	//memcpy(address, mapAddress, sizeof(SocketAddressLocal));
+	//sockaddr* sockaddr = esaddress->getAddress();
+	//address->setAddress(sockaddr, esaddress->getLen());
+
+//	printf("connected to: %s, with len %d\n", ((sockaddr_un*)((SocketAddressLocal*)mapAddress)->getAddress())->sun_path, ((SocketAddressLocal*)mapAddress)->getLen());
 
 	close(fd);
 }

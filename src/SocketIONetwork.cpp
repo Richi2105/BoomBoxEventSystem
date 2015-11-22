@@ -24,6 +24,7 @@ SocketIO_Network::SocketIO_Network(in_port_t port) : myAddress()
 	char uid[25];
 	snprintf(uid, 25, "UID=%ld", (long) getpid());
 	this->uniqueID = uid;
+	char address[INET_ADDRSTRLEN];
 
 	struct sockaddr_in mySockAddress;
 	socklen_t socklen;
@@ -56,6 +57,7 @@ SocketIO_Network::SocketIO_Network(in_port_t port) : myAddress()
 			{
 				mySockAddress.sin_addr = ((struct sockaddr_in *)ifa->ifa_addr)->sin_addr;
 				printf("Address saved\n");
+				memcpy(address, addressBuffer, INET_ADDRSTRLEN);
 			}
 		}
 		else if (ifa->ifa_addr->sa_family == AF_INET6)
@@ -73,7 +75,7 @@ SocketIO_Network::SocketIO_Network(in_port_t port) : myAddress()
 	bind(this->socketFileDescriptor, (struct sockaddr*)&mySockAddress, sizeof(sockaddr_in));
 
 	getsockname(this->socketFileDescriptor, (struct sockaddr*)&mySockAddress, &socklen);
-	printf("%s\n", mySockAddress.sin_addr);
+	printf("%s\n", address);
 	this->myAddress.setAddress(mySockAddress, socklen);
 
 }
