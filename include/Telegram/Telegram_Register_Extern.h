@@ -21,8 +21,9 @@ class Telegram_Register_Extern : public Telegram
         char* getClientID();
     protected:
     private:
-        SocketAddressNetwork clientAddress;
         char clientID[ID_SIZE];
+        SocketAddressNetwork clientAddress;
+
 };
 
 #endif // TELEGRAM_REGISTER_EXTERN_H

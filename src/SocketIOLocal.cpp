@@ -13,6 +13,7 @@
 
 SocketIO_Local::SocketIO_Local() : myAddress()
 {
+	printf("Creating SocketIO_Local\n");
     char uid[25];
     snprintf(uid, 25, "UID=%ld", (long) getpid());
     this->uniqueID = uid;
@@ -28,12 +29,8 @@ SocketIO_Local::SocketIO_Local() : myAddress()
     snprintf(mySockAddress.sun_path, sizeof(mySockAddress.sun_path), "/tmp/ipc_%ld", (long) getpid());
 
     bind(this->socketFileDescriptor, (struct sockaddr*)&mySockAddress, sizeof(sockaddr_un));
-
-
-
-
-    getsockname(this->socketFileDescriptor, (struct sockaddr*)&mySockAddress, &socklen);
-    printf("%s\n", mySockAddress.sun_path);
+//    getsockname(this->socketFileDescriptor, (struct sockaddr*)&mySockAddress, &socklen);
+    printf("my Address: %s\n", mySockAddress.sun_path);
     this->myAddress.setAddress(mySockAddress, socklen);
 }
 

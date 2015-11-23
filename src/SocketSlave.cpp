@@ -21,6 +21,7 @@
 
 Socket_Slave::Socket_Slave()
 {
+	printf("Creating Socket_Slave()\n");
     this->socket = new SocketIO_Local();
     this->masterAddress = new SocketAddressLocal();
     this->getAddressFromSharedMemory(((SocketAddressLocal**)&this->masterAddress));
@@ -30,6 +31,7 @@ Socket_Slave::Socket_Slave()
 
 Socket_Slave::Socket_Slave(in_port_t port)
 {
+	printf("Creating Socket_Slave(%d)\n", port);
 	this->socket = new SocketIO_Network(port);
 	this->masterAddress = new SocketAddressNetwork();
 	this->local = false;
@@ -42,6 +44,17 @@ Socket_Slave::~Socket_Slave()
 
 int Socket_Slave::send(void* data, int numOfBytes)
 {
+	unsigned char* data1 = (unsigned char*) data;
+	printf("Contents of Telegram\n");
+	for (int i=0; i<numOfBytes; i+=1)
+	{
+		printf("%2x ", *(data1+i));
+		if (i%16==0)
+		{
+			printf("\n");
+		}
+
+	}
     return sendto(this->socket->getSocketFileDescriptor(), data, numOfBytes, 0, this->masterAddress->getAddress(), this->masterAddress->getLen());
 }
 
@@ -87,7 +100,7 @@ void Socket_Slave::connect(std::string id)
     	else
     	{
     		telegram = new Telegram_Register_Extern(*(SocketAddressNetwork*)this->socket->getAddress(), id);
-    		printf("Telegram initialized, source is %s\n", ((Telegram_Register*)telegram)->getClientID());
+    		printf("Telegram initialized, source is %s\n", ((Telegram_Register_Extern*)telegram)->getClientID());
     	}
 
     	this->send((void*) telegram, telegram->getSize()+10);

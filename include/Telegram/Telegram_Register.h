@@ -20,8 +20,9 @@ class Telegram_Register : public Telegram
         char* getClientID();
     protected:
     private:
-        SocketAddressLocal clientAddress;
         char clientID[ID_SIZE];
+        SocketAddressLocal clientAddress;
+
 };
 
 #endif // TELEGRAM_REGISTER_H

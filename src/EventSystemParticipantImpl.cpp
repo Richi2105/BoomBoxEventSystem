@@ -31,7 +31,6 @@ EventSystemParticipantImpl::EventSystemParticipantImpl(std::string id) : socket(
 
     this->id = id;
     this->messageMemory = malloc(4096);
-    this->socket.connect(this->id);
     int error;
 
     error = pthread_create(&(this->connectThreadID), NULL, checkForMessageD, this);
@@ -42,18 +41,16 @@ EventSystemParticipantImpl::EventSystemParticipantImpl(std::string id) : socket(
     }
     else
     {
-        sleep(1);
         printf("Event System Participant successful created\n");
     }
 }
 
-EventSystemParticipantImpl::EventSystemParticipantImpl(std::string, in_port_t port) : socket(port)
+EventSystemParticipantImpl::EventSystemParticipantImpl(std::string id, in_port_t port) : socket(port)
 {
     printf("building %s Participant...\n", id.c_str());
 
     this->id = id;
     this->messageMemory = malloc(4096);
-    this->socket.connect(this->id);
     int error;
 
     error = pthread_create(&(this->connectThreadID), NULL, checkForMessageD, this);
@@ -64,7 +61,6 @@ EventSystemParticipantImpl::EventSystemParticipantImpl(std::string, in_port_t po
     }
     else
     {
-        sleep(1);
         printf("Event System Participant successful created\n");
     }
 }
@@ -73,7 +69,27 @@ EventSystemParticipantImpl::~EventSystemParticipantImpl()
 {
     //dtor
 }
-
+int EventSystemParticipantImpl::connectToMaster()
+{
+	if (this->socket.isLocal())
+	{
+		this->socket.connect(this->id);
+		return 0;
+	}
+	else
+		return -1;
+}
+int EventSystemParticipantImpl::connectToMaster(sockaddr_in address)
+{
+	if (!this->socket.isLocal())
+	{
+		this->socket.setAddress(address, sizeof(sockaddr_in));
+		this->socket.connect(this->id);
+		return 0;
+	}
+	else
+		return -1;
+}
 std::string EventSystemParticipantImpl::getIdentifier()
 {
     return this->id;

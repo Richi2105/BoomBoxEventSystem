@@ -21,6 +21,7 @@
 
 SocketIO_Network::SocketIO_Network(in_port_t port) : myAddress()
 {
+	printf("Creating SocketIO_Network(%d)\n", port);
 	char uid[25];
 	snprintf(uid, 25, "UID=%ld", (long) getpid());
 	this->uniqueID = uid;
@@ -69,20 +70,23 @@ SocketIO_Network::SocketIO_Network(in_port_t port) : myAddress()
 			printf("%s IP Address %s\n", ifa->ifa_name, addressBuffer);
 		}
 	}
-	if (ifAddrStruct!=NULL) freeifaddrs(ifAddrStruct);
-
+	if (ifAddrStruct!=NULL)
+	{
+		freeifaddrs(ifAddrStruct);
+	}
 
 	bind(this->socketFileDescriptor, (struct sockaddr*)&mySockAddress, sizeof(sockaddr_in));
 
 //	getsockname(this->socketFileDescriptor, (struct sockaddr*)&mySockAddress, &socklen);
 	socklen = 16;
-	printf("%s\n", address);
+	printf("my IP Address: %x\n", mySockAddress.sin_addr.s_addr);
 	this->myAddress.setAddress(mySockAddress, socklen);
 
 }
 
-SocketIO_Network::~SocketIO_Network() {
-	// TODO Auto-generated destructor stub
+SocketIO_Network::~SocketIO_Network()
+{
+	close(this->socketFileDescriptor);
 }
 
 std::string SocketIO_Network::getUniqueID()

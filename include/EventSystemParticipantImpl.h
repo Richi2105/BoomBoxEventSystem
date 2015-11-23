@@ -17,6 +17,8 @@ class EventSystemParticipantImpl : public EventSystemParticipant
         EventSystemParticipantImpl(std::string);
         EventSystemParticipantImpl(std::string, in_port_t port);
         virtual ~EventSystemParticipantImpl();
+        int connectToMaster();
+        int connectToMaster(sockaddr_in address);
         std::string getIdentifier();
         std::string getUniqueIdentifier();
         SocketAddress* getAddress();
