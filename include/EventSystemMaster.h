@@ -31,6 +31,8 @@ class EventSystemMaster : public EventSystemParticipant
         std::string getIdentifier();
         std::string getUniqueIdentifier();
         virtual SocketIO* getSocket();
+        SocketIO_Local* getLocalSocket();
+        SocketIO_Network* getNetworkSocket();
         virtual SocketAddress* getAddress();
         void addClient(std::string id, SocketAddressLocal address);
         void addClient(std::string id, SocketAddressNetwork address);

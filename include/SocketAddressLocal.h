@@ -9,7 +9,6 @@
 #define INCLUDE_SOCKETADDRESSLOCAL_H_
 
 #include <sys/un.h>
-
 #include "SocketAddress.h"
 
 class SocketAddressLocal: public SocketAddress {

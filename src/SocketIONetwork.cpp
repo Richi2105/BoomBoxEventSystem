@@ -74,7 +74,8 @@ SocketIO_Network::SocketIO_Network(in_port_t port) : myAddress()
 
 	bind(this->socketFileDescriptor, (struct sockaddr*)&mySockAddress, sizeof(sockaddr_in));
 
-	getsockname(this->socketFileDescriptor, (struct sockaddr*)&mySockAddress, &socklen);
+//	getsockname(this->socketFileDescriptor, (struct sockaddr*)&mySockAddress, &socklen);
+	socklen = 16;
 	printf("%s\n", address);
 	this->myAddress.setAddress(mySockAddress, socklen);
 

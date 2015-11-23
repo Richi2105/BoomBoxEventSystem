@@ -25,7 +25,29 @@ void* checkForMessageD(void* eventSystemPart)
     return ((void*) 0);
 }
 
-EventSystemParticipantImpl::EventSystemParticipantImpl(std::string id)
+EventSystemParticipantImpl::EventSystemParticipantImpl(std::string id) : socket()
+{
+    printf("building %s Participant...\n", id.c_str());
+
+    this->id = id;
+    this->messageMemory = malloc(4096);
+    this->socket.connect(this->id);
+    int error;
+
+    error = pthread_create(&(this->connectThreadID), NULL, checkForMessageD, this);
+    printf("Error: %d\n", error);
+    if (error < 0)
+    {
+        exit (-1);
+    }
+    else
+    {
+        sleep(1);
+        printf("Event System Participant successful created\n");
+    }
+}
+
+EventSystemParticipantImpl::EventSystemParticipantImpl(std::string, in_port_t port) : socket(port)
 {
     printf("building %s Participant...\n", id.c_str());
 
@@ -58,7 +80,11 @@ std::string EventSystemParticipantImpl::getIdentifier()
 }
 std::string EventSystemParticipantImpl::getUniqueIdentifier()
 {
-    return (this->socket.getUniqueID() + "__" + this->id);
+    return (this->socket.getSocket()->getUniqueID() + "__" + this->id);
+}
+void EventSystemParticipantImpl::setAddress(sockaddr_in address, socklen_t len)
+{
+	this->socket.setAddress(address, len);
 }
 SocketAddress* EventSystemParticipantImpl::getAddress()
 {

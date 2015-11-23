@@ -19,6 +19,7 @@ class Socket_Slave
         void setAddress(struct sockaddr_in address, socklen_t len);
         SocketAddress* getAddress();
         SocketIO* getSocket();
+        bool isLocal();
 
         int send(void* data, int numOfBytes);
 

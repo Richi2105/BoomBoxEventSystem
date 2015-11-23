@@ -9,6 +9,7 @@
 #include "../include/Telegram/Telegram.h"
 #include "../include/Telegram/Telegram_Log.h"
 #include "../include/Telegram/Telegram_Register.h"
+#include "../include/Telegram/Telegram_Register_Extern.h"
 
 #include "../include/EventSystemMaster.h"
 #include "../include/EventSystemParticipant.h"
@@ -40,7 +41,7 @@ void* checkForMessageLocal(void* eventSystemMaster)
     while (true)
     {
         memset(data, 0, 4096);
-        int bytes = evm->getSocket()->receive((void*)data, 4096);
+        int bytes = evm->getLocalSocket()->receive((void*)data, 4096);
         printf("Destination: %s\nReceived Bytes: %d\n", data->getDestinationID(), bytes);
 
 
@@ -68,6 +69,46 @@ void* checkForMessageLocal(void* eventSystemMaster)
     return ((void*) 0);
 }
 
+void* checkForMessageNetwork(void* eventSystemMaster)
+{
+
+    EventSystemMaster* evm = (EventSystemMaster*) eventSystemMaster;
+    printf("%s\n", evm->getUniqueIdentifier().c_str());
+    Telegram* data = (Telegram*)malloc(4096);
+    printf("Pointer to data: %p\n", data);
+
+    time_t currTime = time(NULL);
+    while (true)
+    {
+        memset(data, 0, 4096);
+        int bytes = evm->getNetworkSocket()->receive((void*)data, 4096);
+        printf("Destination: %s\nReceived Bytes: %d\n", data->getDestinationID(), bytes);
+
+
+        if (stringCompare(data->getDestinationID(), id_master))
+        {
+            printf("Client trys to register: %s\nTelegram size: %d\n", ((Telegram_Register_Extern*)data)->getClientID(), data->getSize());
+
+            std::string s(((Telegram_Register_Extern*)data)->getClientID());
+            evm->addClient(s, *((Telegram_Register_Extern*)data)->getClientAddress());
+        }
+        else if (stringCompare(data->getDestinationID(), id_logger))
+        {
+            currTime = ((Telegram_Log*)data)->getTime();
+            printf("On %s: Message: %s, with %d bytes from %s\n", ctime(&currTime), ((Telegram_Log*)data)->getLog(), data->getSize(), ((Telegram_Log*)data)->getSourceID());
+            evm->sendToClient(data->getDestinationID(), data);
+        }
+        else
+        {
+            evm->sendToClient(data->getDestinationID(), data);
+        }
+
+
+
+    }
+    return ((void*) 0);
+}
+
 EventSystemMaster::EventSystemMaster() : master(666)
 {
 //    this->master = *(new SocketReaderMaster());
@@ -77,7 +118,13 @@ EventSystemMaster::EventSystemMaster() : master(666)
 
     int error;
     pthread_t connectThreadID;
+    pthread_t connectThreadNetworkID;
     error = pthread_create(&connectThreadID, NULL, checkForMessageLocal, this);
+    if (error < 0)
+	{
+		exit (-1);
+	}
+    error = pthread_create(&connectThreadNetworkID, NULL, checkForMessageNetwork, this);
 //    this->threadCheckMessageLocal = new std::thread(checkForMessageLocal);
     printf("Error: %d\n", error);
     if (error < 0)
@@ -107,6 +154,14 @@ std::string EventSystemMaster::getUniqueIdentifier()
 SocketIO* EventSystemMaster::getSocket()
 {
     return (SocketIO*)this->master.getLocalSocket();
+}
+SocketIO_Local* EventSystemMaster::getLocalSocket()
+{
+    return (SocketIO_Local*)this->master.getLocalSocket();
+}
+SocketIO_Network* EventSystemMaster::getNetworkSocket()
+{
+    return (SocketIO_Network*)this->master.getNetworkSocket();
 }
 SocketAddress* EventSystemMaster::getAddress()
 {

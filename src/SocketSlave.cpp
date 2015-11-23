@@ -47,7 +47,15 @@ int Socket_Slave::send(void* data, int numOfBytes)
 
 void Socket_Slave::setAddress(struct sockaddr_in address, socklen_t len)
 {
-	((SocketAddressNetwork*)this->masterAddress)->setAddress(address, len);
+	if (!this->local)
+	{
+		((SocketAddressNetwork*)this->masterAddress)->setAddress(address, len);
+	}
+}
+
+bool Socket_Slave::isLocal()
+{
+	return this->local;
 }
 
 SocketAddress* Socket_Slave::getAddress()
@@ -69,7 +77,8 @@ void Socket_Slave::connect(std::string id)
     }
     else
     {
-    	Telegram* telegram;
+    	Telegram* telegram = (Telegram*)malloc(sizeof(Telegram_Register_Extern));
+    	memset(telegram, 0, sizeof(Telegram_Register_Extern));
     	if (this->local)
     	{
 			telegram = new Telegram_Register(*(SocketAddressLocal*)this->socket->getAddress(), id);
