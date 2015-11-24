@@ -29,4 +29,11 @@ private:
 	uint8_t addressSize;
 };
 
+struct _socketAddressLocal{
+	sockaddr_un address;
+	socklen_t len;
+};
+
+typedef struct _socketAddressLocal socketAddress_local;
+
 #endif /* INCLUDE_SOCKETADDRESSLOCAL_H_ */

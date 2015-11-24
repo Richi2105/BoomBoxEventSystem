@@ -17,3 +17,11 @@ char* Telegram_Register_Extern::getClientID()
 {
     return this->clientID;
 }
+
+void initTelegram_Register_Network(telegram_register_network* telegram, socketAddress_network address, std::string clientID)
+{
+	initTelegram(&telegram->header, "MASTER");
+	telegram->header.telegramSize = sizeof(telegram_register_network);
+	telegram->address = address;
+	memcpy(telegram->clientID, clientID.c_str(), ID_SIZE < clientID.size() ? ID_SIZE : clientID.size());
+}

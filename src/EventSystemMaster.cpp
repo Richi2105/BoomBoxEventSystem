@@ -44,6 +44,18 @@ void* checkForMessageLocal(void* eventSystemMaster)
         int bytes = evm->getLocalSocket()->receive((void*)data, 4096);
         printf("Destination: %s\nReceived Bytes: %d\n", data->getDestinationID(), bytes);
 
+        unsigned char* data1 = (unsigned char*) data;
+		printf("Contents of Telegram:\n");
+		for (int i=0; i<bytes; i+=1)
+		{
+			printf("%2x ", *(data1+i));
+			if (i%16==0)
+			{
+				printf("\n");
+			}
+
+		}
+
 
         if (stringCompare(data->getDestinationID(), id_master))
         {
@@ -74,7 +86,10 @@ void* checkForMessageNetwork(void* eventSystemMaster)
 
     EventSystemMaster* evm = (EventSystemMaster*) eventSystemMaster;
     printf("%s\n", evm->getUniqueIdentifier().c_str());
-    void* data = malloc(4096);
+    Telegram* data = (Telegram*)malloc(4096);
+    printf("For your information: %p Telegram\n"
+    		"\t\t%p destinationIDTelegram\n"
+    		"offset: %d\n", data, &data->destinationID, (unsigned char)((Telegram*)(&data->destinationID) - data));
     printf("Pointer to data: %p\n", data);
 
     time_t currTime = time(NULL);
@@ -83,6 +98,7 @@ void* checkForMessageNetwork(void* eventSystemMaster)
         memset(data, 0, 4096);
         int bytes = evm->getNetworkSocket()->receive((void*)data, 4096);
         printf("Destination: %s\nReceived Bytes: %d\n", ((Telegram*)data)->getDestinationID(), bytes);
+
         unsigned char* data1 = (unsigned char*) data;
         printf("Contents of Telegram:\n");
         for (int i=0; i<bytes; i+=1)
@@ -96,14 +112,14 @@ void* checkForMessageNetwork(void* eventSystemMaster)
         }
 
 
-        if (stringCompare(((Telegram*)data)->getDestinationID(), id_master))
+        if (stringCompare(data->getDestinationID(), id_master))
         {
             printf("Client trys to register: %s\nTelegram size: %d\n", ((Telegram_Register_Extern*)data)->getClientID(), ((Telegram*)data)->getSize());
 
             std::string s(((Telegram_Register_Extern*)data)->getClientID());
             evm->addClient(s, *((Telegram_Register_Extern*)data)->getClientAddress());
         }
-        else if (stringCompare(((Telegram*)data)->getDestinationID(), id_logger))
+        else if (stringCompare(data->getDestinationID(), id_logger))
         {
             currTime = ((Telegram_Log*)data)->getTime();
             printf("On %s: Message: %s, with %d bytes from %s\n", ctime(&currTime), ((Telegram_Log*)data)->getLog(), ((Telegram*)data)->getSize(), ((Telegram_Log*)data)->getSourceID());
@@ -111,7 +127,7 @@ void* checkForMessageNetwork(void* eventSystemMaster)
         }
         else
         {
-            evm->sendToClient(((Telegram*)data)->getDestinationID(), ((Telegram*)data));
+            evm->sendToClient(data->getDestinationID(), data);
         }
 
 

@@ -5,6 +5,7 @@
 #include <string>
 #include <string.h>
 #include <stdio.h>
+#include <stdint.h>
 
 #include "../SocketAddressLocal.h"
 
@@ -24,5 +25,15 @@ class Telegram_Register : public Telegram
         SocketAddressLocal clientAddress;
 
 };
+
+struct _telegram_register_local{
+	telegram header;
+	int8_t clientID[ID_SIZE];
+	socketAddress_local address;
+};
+
+typedef struct _telegram_register_local telegram_register_local;
+
+void initTelegram_Register_Local(telegram_register_local* telegram, socketAddress_local address, std::string clientID);
 
 #endif // TELEGRAM_REGISTER_H

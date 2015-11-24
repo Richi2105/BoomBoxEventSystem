@@ -21,3 +21,9 @@ int Telegram::getSize()
 {
     return this->telegramSize;
 }
+
+void initTelegram(telegram* telegram, std::string id)
+{
+	memcpy(telegram->destinationID, id.c_str(), ID_SIZE < id.size() ? ID_SIZE : id.size());
+	telegram->telegramSize = sizeof(struct _telegram);
+}
