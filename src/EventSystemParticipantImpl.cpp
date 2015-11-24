@@ -9,8 +9,9 @@
 void* checkForMessageD(void* eventSystemPart)
 {
     EventSystemParticipantImpl* evp = (EventSystemParticipantImpl*) eventSystemPart;
-    printf("%s\n", evp->getUniqueIdentifier().c_str());
-    Telegram* data = (Telegram*)evp->getMessageMemory();
+    printf("EventSysPartImpl_Thread: %s\n", evp->getUniqueIdentifier().c_str());
+    Telegram* espData = (Telegram*)evp->getMessageMemory();
+    Telegram* data = (Telegram*) malloc(4096);
     while (true)
     {
         memset(data, 0, 4096);
@@ -20,6 +21,7 @@ void* checkForMessageD(void* eventSystemPart)
 
         Telegram* telegram = new Telegram(((Telegram_Log*)data)->getSourceID());
         evp->getSocket()->send((void*)telegram, telegram->getSize());
+        memcpy(espData, data, 4096);
 
     }
     return ((void*) 0);

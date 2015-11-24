@@ -60,7 +60,8 @@ std::string EventSystemLogger::getIdentifier()
 }
 std::string EventSystemLogger::getUniqueIdentifier()
 {
-    return (this->slave.getUniqueID() + "__" + this->id);
+
+	return (this->slave.getSocket()->getUniqueID() + "__" + this->id);
 }
 SocketAddress* EventSystemLogger::getAddress()
 {
