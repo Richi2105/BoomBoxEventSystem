@@ -90,20 +90,36 @@ void Socket_Slave::connect(std::string id)
     }
     else
     {
-    	Telegram* telegram = (Telegram*)malloc(sizeof(Telegram_Register_Extern));
-    	memset(telegram, 0, sizeof(Telegram_Register_Extern));
+    	Telegram* telegram;
+    	void* data;
+//    	void* telegram = malloc(sizeof(telegram_register_network));
+//    	memset(telegram, 0, sizeof(telegram_register_network));
     	if (this->local)
     	{
 			telegram = new Telegram_Register(*(SocketAddressLocal*)this->socket->getAddress(), id);
+			printf("telegram initialized\n");
+			data = malloc(telegram->getSerializedSize());
+			printf("data allocated\n");
+			((Telegram_Register*)telegram)->serialize(data);
 			printf("Telegram initialized, source is %s\n", ((Telegram_Register*)telegram)->getClientID());
+//    		socketAddress_local addr;
+//    		this->masterAddress->convertTo_Struct((void*) &addr);
+//    		initTelegram_Register_Local((telegram_register_local*) telegram, &addr,	&id);
+//    		printf("Telegram initialized, source is %s", ((telegram_head*)telegram)->destinationID);
     	}
     	else
     	{
     		telegram = new Telegram_Register_Extern(*(SocketAddressNetwork*)this->socket->getAddress(), id);
+    		data = malloc(telegram->getSerializedSize());
+    		((Telegram_Register_Extern*)telegram)->serialize(data);
     		printf("Telegram initialized, source is %s\n", ((Telegram_Register_Extern*)telegram)->getClientID());
+//    		socketAddress_network addr;
+//    		this->masterAddress->convertTo_Struct((void*) &addr);
+//    		initTelegram_Register_Network((telegram_register_network*) telegram, &addr,	&id);
+//    		printf("Telegram initialized, source is %s", ((telegram_head*)telegram)->destinationID);
     	}
 
-    	this->send((void*) telegram, telegram->getSize()+10);
+    	this->send(data, telegram->getSize());
     }
 }
 

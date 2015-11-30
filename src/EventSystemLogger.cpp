@@ -13,16 +13,19 @@ void* log(void* eventSystemPart)
     EventSystemParticipant* evp = (EventSystemParticipant*) eventSystemPart;
     printf("%s\n", evp->getUniqueIdentifier().c_str());
     time_t currTime;
-    Telegram* data = (Telegram*)malloc(4096);
+    void* data = malloc(4096);
+    Telegram_Log log;
     while (true)
     {
+    	sleep(1);
         memset(data, 0, 4096);
         evp->getSocket()->receive((void*)data, 4096);
-        currTime = ((Telegram_Log*)data)->getTime();
-        printf("On %s: Message: %s, from %s\n", ctime(&currTime), ((Telegram_Log*)data)->getLog(), ((Telegram_Log*)data)->getUniqueSourceID());
+        log.deserialize(data);
+        currTime = log.getTime();
+        printf("On %s: Message: %s, from %s\n", ctime(&currTime), log.getLog(), log.getUniqueSourceID());
 
-        Telegram* telegram = new Telegram(((Telegram_Log*)data)->getSourceID());
-        evp->getSocket()->send((void*)telegram, telegram->getSize());
+//        Telegram* telegram = new Telegram(((Telegram_Log*)data)->getSourceID());
+//        evp->getSocket()->send((void*)telegram, telegram->getSize());
 
     }
     return ((void*) 0);

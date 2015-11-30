@@ -34,9 +34,9 @@ class EventSystemMaster : public EventSystemParticipant
         SocketIO_Local* getLocalSocket();
         SocketIO_Network* getNetworkSocket();
         virtual SocketAddress* getAddress();
-        void addClient(std::string id, SocketAddressLocal address);
-        void addClient(std::string id, SocketAddressNetwork address);
-        void sendToClient(std::string destination, Telegram* data);
+        void addClient(std::string id, SocketAddressLocal* address);
+        void addClient(std::string id, SocketAddressNetwork* address);
+        void sendToClient(std::string destination, void* data, int numOfBytes);
 
         void* getDataPointer();
 

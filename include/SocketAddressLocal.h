@@ -10,8 +10,10 @@
 
 #include <sys/un.h>
 #include "SocketAddress.h"
+#include "Serializeable.h"
 
-class SocketAddressLocal: public SocketAddress {
+class SocketAddressLocal: public SocketAddress, Serializeable
+{
 public:
 	SocketAddressLocal(sockaddr_un address, socklen_t len);
 	SocketAddressLocal();
@@ -19,9 +21,15 @@ public:
 
 	void setAddress(sockaddr_un address, socklen_t len);
 
-	sockaddr* getAddress();
-	socklen_t getLen();
-	uint8_t getSize();
+	virtual sockaddr* getAddress();
+	virtual socklen_t getLen();
+	virtual uint8_t getSize();
+
+	virtual void convertTo_Struct(void* address);
+
+	virtual int16_t getSerializedSize();
+	virtual int serialize(void* const data);
+	virtual int deserialize(void const * const data);
 
 private:
 	sockaddr_un address;

@@ -27,13 +27,14 @@ class EventSystemParticipantImpl : public EventSystemParticipant
         void* getMessageMemory();
 
         void send(Telegram* telegram);
-        int receive(Telegram* telegram, bool nonblocking);
+        int receive(void* data, bool nonblocking);
         void setMessageReceived(bool newMessage);
     protected:
     private:
         std::string id;
         Socket_Slave socket;
         void* messageMemory;    //Mutex!
+        void* sendMemory;
         pthread_t connectThreadID;
         bool newMessage;        //Mutex!
 };

@@ -5,10 +5,11 @@
 #include <string>
 #include <string.h>
 #include <stdint.h>
+#include "../Serializeable.h"
 
 #define ID_SIZE 20
 
-class Telegram
+class Telegram : public Serializeable
 {
     public:
         Telegram(std::string identifier);
@@ -16,9 +17,12 @@ class Telegram
         char* getDestinationID();
         int getSize();
 
-        char destinationID[ID_SIZE];
-    protected:
+        virtual int16_t getSerializedSize();
+    	virtual int serialize(void* const data);
+    	virtual int deserialize(void const * const data);
 
+    protected:
+		char destinationID[ID_SIZE];
         int telegramSize;
 };
 
@@ -29,8 +33,8 @@ struct _telegram{
 	int16_t telegramSize = 0;
 };
 
-typedef struct _telegram telegram;
+typedef struct _telegram telegram_head;
 
-void initTelegram(telegram* telegram, std::string id);
+void initTelegram(telegram_head* telegram, std::string* id);
 
 #endif // TELEGRAM_H

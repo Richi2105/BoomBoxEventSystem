@@ -10,8 +10,10 @@
 
 #include <netinet/in.h>
 #include "SocketAddress.h"
+#include "Serializeable.h"
 
-class SocketAddressNetwork: public SocketAddress {
+class SocketAddressNetwork: public SocketAddress, Serializeable
+{
 public:
 	SocketAddressNetwork(sockaddr_in address, socklen_t len);
 	SocketAddressNetwork();
@@ -22,6 +24,12 @@ public:
 	sockaddr* getAddress();
 	socklen_t getLen();
 	uint8_t getSize();
+
+	void convertTo_Struct(void* address);
+
+	virtual int16_t getSerializedSize();
+	virtual int serialize(void* const data);
+	virtual int deserialize(void const * const data);
 
 private:
 	sockaddr_in address;

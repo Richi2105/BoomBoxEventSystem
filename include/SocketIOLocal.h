@@ -18,13 +18,13 @@ class SocketIO_Local : public SocketIO
         virtual ~SocketIO_Local();
 
         virtual int send(void* data, int numOfBytes);
-        int receive(void* data, int numOfBytes);
+        virtual int receive(void* data, int numOfBytes);
 
-        SocketAddress* getAddress();
+        virtual SocketAddress* getAddress();
 
-        int getSocketFileDescriptor();
+        virtual int getSocketFileDescriptor();
 
-        std::string getUniqueID();
+        virtual std::string getUniqueID();
 
     protected:
         SocketAddressLocal myAddress;

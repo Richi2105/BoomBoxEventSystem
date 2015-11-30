@@ -10,18 +10,20 @@ void* checkForMessageD(void* eventSystemPart)
 {
     EventSystemParticipantImpl* evp = (EventSystemParticipantImpl*) eventSystemPart;
     printf("EventSysPartImpl_Thread: %s\n", evp->getUniqueIdentifier().c_str());
-    Telegram* espData = (Telegram*)evp->getMessageMemory();
-    Telegram* data = (Telegram*) malloc(4096);
+    void* espData = evp->getMessageMemory();
+    void* data = malloc(4096);
     while (true)
     {
+    	sleep(1);
         memset(data, 0, 4096);
-        evp->getSocket()->receive((void*)data, 4096);
+        int bytes = evp->getSocket()->receive(data, 4096);
         evp->setMessageReceived(true);
-        printf("Anonymous Telegram with size %d\n", data->getSize());
-
-        Telegram* telegram = new Telegram(((Telegram_Log*)data)->getSourceID());
-        evp->getSocket()->send((void*)telegram, telegram->getSize());
         memcpy(espData, data, 4096);
+        printf("Anonymous Telegram with size %d\n", bytes);
+
+//        Telegram* telegram = new Telegram(((Telegram_Log*)data)->getSourceID());
+//        evp->getSocket()->send((void*)telegram, telegram->getSize());
+        memcpy(espData, data, bytes);
 
     }
     return ((void*) 0);
@@ -33,6 +35,7 @@ EventSystemParticipantImpl::EventSystemParticipantImpl(std::string id) : socket(
 
     this->id = id;
     this->messageMemory = malloc(4096);
+    this->sendMemory = malloc(4096);
     int error;
 
     error = pthread_create(&(this->connectThreadID), NULL, checkForMessageD, this);
@@ -53,6 +56,7 @@ EventSystemParticipantImpl::EventSystemParticipantImpl(std::string id, in_port_t
 
     this->id = id;
     this->messageMemory = malloc(4096);
+    this->sendMemory = malloc(4096);
     int error;
 
     error = pthread_create(&(this->connectThreadID), NULL, checkForMessageD, this);
@@ -124,16 +128,19 @@ void EventSystemParticipantImpl::setMessageReceived(bool newMessage)
 
 void EventSystemParticipantImpl::send(Telegram* telegram)
 {
-    this->socket.send((void*) telegram, telegram->getSize());
+	memset(this->sendMemory, 0, 4096);
+	printf("EventSystemParticipantImpl::send(): sending to %s\n", telegram->getDestinationID());
+	int bytes = telegram->serialize(this->sendMemory);
+    this->socket.send(this->sendMemory, bytes);
 }
 
-int EventSystemParticipantImpl::receive(Telegram* telegram, bool nonblocking)
+int EventSystemParticipantImpl::receive(void* data, bool nonblocking)
 {
     if (nonblocking)
     {
         if (this->newMessage)
         {
-            memcpy(telegram, this->messageMemory, 4096);
+            memcpy(data, this->messageMemory, 4096);
             this->newMessage = false;
             return 1;
         }

@@ -34,16 +34,23 @@ void* checkForMessageLocal(void* eventSystemMaster)
 
     EventSystemMaster* evm = (EventSystemMaster*) eventSystemMaster;
     printf("%s\n", evm->getUniqueIdentifier().c_str());
-    Telegram* data = (Telegram*)malloc(4096);
-    printf("Pointer to data: %p\n", data);
+    void* data = malloc(4096);
+    Telegram* telegram = new Telegram("");
+    Telegram_Register telegram_reg;
+    printf("Local Receive Thread: Pointer to data: %p\n", data);
 
     time_t currTime = time(NULL);
     while (true)
     {
+    	sleep(1);
         memset(data, 0, 4096);
-        int bytes = evm->getLocalSocket()->receive((void*)data, 4096);
-        printf("Destination: %s\nReceived Bytes: %d\n", data->getDestinationID(), bytes);
+        int bytes = evm->getLocalSocket()->receive(data, 4096);
+        printf("Local Receive Thread: received something\n");
 
+        telegram->deserialize(data);
+        printf("Local Receive Thread:\nDestination: %s\nReceived Bytes: %d\n", telegram->getDestinationID(), bytes);
+
+#ifdef DEBUG
         unsigned char* data1 = (unsigned char*) data;
 		printf("Contents of Telegram:\n");
 		for (int i=0; i<bytes; i+=1)
@@ -55,24 +62,28 @@ void* checkForMessageLocal(void* eventSystemMaster)
 			}
 
 		}
+		printf("\n");
+#endif //DEBUG
 
-
-        if (stringCompare(data->getDestinationID(), id_master))
+        if (stringCompare(telegram->getDestinationID(), id_master))
         {
-            printf("Client trys to register: %s\nTelegram size: %d\n", ((Telegram_Register*)data)->getClientID(), data->getSize());
+        	telegram_reg.deserialize(data);
+            printf("Local Receive Thread:\nClient tries to register: %s\n", telegram_reg.getClientID());
 
-            std::string s(((Telegram_Register*)data)->getClientID());
-            evm->addClient(s, *((Telegram_Register*)data)->getClientAddress());
+            std::string s(telegram_reg.getClientID());
+            evm->addClient(s, telegram_reg.getClientAddress());
         }
-        else if (stringCompare(data->getDestinationID(), id_logger))
+        else if (stringCompare(telegram->getDestinationID(), id_logger))
         {
-            currTime = ((Telegram_Log*)data)->getTime();
-            printf("On %s: Message: %s, with %d bytes from %s\n", ctime(&currTime), ((Telegram_Log*)data)->getLog(), data->getSize(), ((Telegram_Log*)data)->getSourceID());
-            evm->sendToClient(data->getDestinationID(), data);
+        	Telegram_Log log;
+        	log.deserialize(data);
+            currTime = log.getTime();
+            printf("Local Receive Thread:\nOn %s: Message: %s, with %d bytes from %s\n", ctime(&currTime), log.getLog(), log.getSize(), log.getUniqueSourceID());
+            evm->sendToClient(telegram->getDestinationID(), data, bytes);
         }
         else
         {
-            evm->sendToClient(data->getDestinationID(), data);
+            evm->sendToClient(telegram->getDestinationID(), data, bytes);
         }
 
 
@@ -86,50 +97,61 @@ void* checkForMessageNetwork(void* eventSystemMaster)
 
     EventSystemMaster* evm = (EventSystemMaster*) eventSystemMaster;
     printf("%s\n", evm->getUniqueIdentifier().c_str());
-    Telegram* data = (Telegram*)malloc(4096);
-    printf("For your information: %p Telegram\n"
+    void* data = malloc(4096);
+    Telegram telegram("");
+/*    printf("For your information: %p Telegram\n"
     		"\t\t%p destinationIDTelegram\n"
     		"offset: %d\n", data, &data->destinationID, (unsigned char)((Telegram*)(&data->destinationID) - data));
-    printf("Pointer to data: %p\n", data);
+*/
+    printf("Network receive Thread: Pointer to data: %p\n", data);
 
     time_t currTime = time(NULL);
     while (true)
     {
+    	sleep(1);
         memset(data, 0, 4096);
-        int bytes = evm->getNetworkSocket()->receive((void*)data, 4096);
-        printf("Destination: %s\nReceived Bytes: %d\n", ((Telegram*)data)->getDestinationID(), bytes);
+        int bytes = evm->getNetworkSocket()->receive(data, 4096);
+        printf("Network Receive Thread: received something\n");
 
+        telegram.deserialize(data);
+        printf("Destination: %s\nReceived Bytes: %d\n", telegram.getDestinationID(), bytes);
+
+#ifdef DEBUG
         unsigned char* data1 = (unsigned char*) data;
-        printf("Contents of Telegram:\n");
-        for (int i=0; i<bytes; i+=1)
-        {
-        	printf("%2x ", *(data1+i));
-        	if (i%16==0)
-        	{
-        		printf("\n");
-        	}
+		printf("Contents of Telegram:\n");
+		for (int i=0; i<bytes; i+=1)
+		{
+			printf("%2x ", *(data1+i));
+			if (i%16==0)
+			{
+				printf("\n");
+			}
 
+		}
+		printf("\n");
+#endif //DEBUG
+
+        if (stringCompare(telegram.getDestinationID(), id_master))
+        {
+        	Telegram_Register_Extern telegram_reg;
+        	telegram_reg.deserialize(data);
+            printf("Network receive Thread:\nClient tries to register: %s\n", telegram_reg.getClientID());
+
+            std::string s(telegram_reg.getClientID());
+            evm->addClient(s, telegram_reg.getClientAddress());
         }
-
-
-        if (stringCompare(data->getDestinationID(), id_master))
+        else if (stringCompare(telegram.getDestinationID(), id_logger))
         {
-            printf("Client trys to register: %s\nTelegram size: %d\n", ((Telegram_Register_Extern*)data)->getClientID(), ((Telegram*)data)->getSize());
-
-            std::string s(((Telegram_Register_Extern*)data)->getClientID());
-            evm->addClient(s, *((Telegram_Register_Extern*)data)->getClientAddress());
-        }
-        else if (stringCompare(data->getDestinationID(), id_logger))
-        {
-            currTime = ((Telegram_Log*)data)->getTime();
-            printf("On %s: Message: %s, with %d bytes from %s\n", ctime(&currTime), ((Telegram_Log*)data)->getLog(), ((Telegram*)data)->getSize(), ((Telegram_Log*)data)->getSourceID());
-            evm->sendToClient(((Telegram*)data)->getDestinationID(), ((Telegram*)data));
+        	Telegram_Log log;
+        	log.deserialize(data);
+            currTime = log.getTime();
+            printf("Network receive Thread:\nOn %s: Message: %s, with %d bytes from %s\n", ctime(&currTime), log.getLog(), log.getSize(), log.getUniqueSourceID());
+            evm->sendToClient(telegram.getDestinationID(), data, bytes);
         }
         else
         {
-            evm->sendToClient(data->getDestinationID(), data);
+            evm->sendToClient(telegram.getDestinationID(), data, bytes);
         }
-
 
 
     }
@@ -161,7 +183,13 @@ EventSystemMaster::EventSystemMaster() : master(666)
     else
     {
         sleep(1);
-        printf("Event System Master successful created\n");
+/*        this->dataPointer = malloc(4096);
+        Telegram_Register testtele(*(SocketAddressLocal*)(this->master.getLocalSocket()->getAddress()), std::string("TEST"));
+        testtele.serialize(this->dataPointer);
+
+        Telegram_Register testtele2;
+        testtele2.deserialize(this->dataPointer);
+*/        printf("Event System Master successful created\n");
     }
 }
 
@@ -202,69 +230,44 @@ void* EventSystemMaster::getDataPointer()
 
 void* EventSystemMaster::checkForMessage(void* arg)
 {
-	Telegram* data = (Telegram*)malloc(4096);
-	printf("Pointer to data: %p\n", data);
-
-	time_t currTime = time(NULL);
-	while (true)
-	{
-		memset(data, 0, 4096);
-		int bytes = this->getSocket()->receive((void*)data, 4096);
-		printf("Destination: %s\nReceived Bytes: %d\n", data->getDestinationID(), bytes);
-
-
-		if (stringCompare(data->getDestinationID(), id_master))
-		{
-			printf("Client trys to register: %s\nTelegram size: %d\n", ((Telegram_Register*)data)->getClientID(), data->getSize());
-
-			std::string s(((Telegram_Register*)data)->getClientID());
-			this->addClient(s, *((Telegram_Register*)data)->getClientAddress());
-		}
-		else
-		{
-			this->sendToClient(data->getDestinationID(), data);
-		}
-
-
-
-	}
-	return ((void*) 0);
-
+	return nullptr;
 }
 
-void EventSystemMaster::addClient(std::string id, SocketAddressLocal address)
+void EventSystemMaster::addClient(std::string id, SocketAddressLocal* address)
 {
+//	SocketAddressLocal locAddress(address->address, address->len);
 	LocalClientMap::const_iterator result = this->localClients.find(id);
     if (result == this->localClients.end())
     {
     	LocalClientVector vec;
-        vec.push_back(address);
+        vec.push_back(*address);
         std::pair<std::string, LocalClientVector> entry (id, vec);
         this->localClients.insert(entry);
     }
     else
     {
-        (this->localClients.at(id)).push_back(address);
+        (this->localClients.at(id)).push_back(*address);
     }
 }
 
-void EventSystemMaster::addClient(std::string id, SocketAddressNetwork address)
+void EventSystemMaster::addClient(std::string id, SocketAddressNetwork* address)
 {
+//	SocketAddressNetwork netAddress(address->address, address->len);
 	NetworkClientMap::const_iterator result = this->networkClients.find(id);
     if (result == this->networkClients.end())
     {
     	NetworkClientVector vec;
-        vec.push_back(address);
+        vec.push_back(*address);
         std::pair<std::string, NetworkClientVector> entry (id, vec);
         this->networkClients.insert(entry);
     }
     else
     {
-        (this->networkClients.at(id)).push_back(address);
+        (this->networkClients.at(id)).push_back(*address);
     }
 }
 
-void EventSystemMaster::sendToClient(std::string destination, Telegram* data)
+void EventSystemMaster::sendToClient(std::string destination, void* data, int numOfBytes)
 {
     LocalClientMap::const_iterator result = this->localClients.find(destination);
     if (result == this->localClients.end())
@@ -275,7 +278,7 @@ void EventSystemMaster::sendToClient(std::string destination, Telegram* data)
     {
         for (SocketAddressLocal address : result->second)
         {
-            this->master.send((void*)data, data->getSize(), &address);
+            this->master.send(data, numOfBytes, &address);
         }
     }
     NetworkClientMap::const_iterator result2 = this->networkClients.find(destination);
@@ -287,7 +290,7 @@ void EventSystemMaster::sendToClient(std::string destination, Telegram* data)
 	{
 		for (SocketAddressNetwork address : result2->second)
 		{
-			this->master.send((void*)data, data->getSize(), &address);
+			this->master.send((void*)data, numOfBytes, &address);
 		}
 	}
 
