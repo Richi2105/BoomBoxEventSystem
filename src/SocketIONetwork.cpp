@@ -84,6 +84,17 @@ SocketIO_Network::SocketIO_Network(in_port_t port) : myAddress()
 
 }
 
+SocketIO_Network::SocketIO_Network(sockaddr_in* address) : myAddress(*address, sizeof(address))
+{
+	printf("Creating SocketIO_Network(%d)\n", address->sin_addr.s_addr);
+	char uid[25];
+	snprintf(uid, 25, "UID=%ld", (long) getpid());
+	this->uniqueID = uid;
+
+	this->socketFileDescriptor = socket(AF_INET, SOCK_DGRAM, 0);
+	bind(this->socketFileDescriptor, (struct sockaddr*)address, sizeof(sockaddr_in));
+}
+
 SocketIO_Network::~SocketIO_Network()
 {
 	close(this->socketFileDescriptor);

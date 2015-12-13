@@ -14,6 +14,7 @@ class Socket_Master
 {
     public:
         Socket_Master(in_port_t port);
+        Socket_Master(char* networkDevice);
         virtual ~Socket_Master();
 
         int send(void* data, int numOfBytes, SocketAddressLocal* dest);

@@ -26,6 +26,11 @@ bool stringCompare(const char* str1, const char* str2)
     }
 }
 
+struct threadArgument {
+	bool local;
+	EventSystemMaster* masterPointer;
+};
+
 const char id_master[] = "MASTER";
 const char id_logger[] = "LOGGER";
 
@@ -158,6 +163,92 @@ void* checkForMessageNetwork(void* eventSystemMaster)
     return ((void*) 0);
 }
 
+void* checkForMessage(void* arg)
+{
+    EventSystemMaster* evm = ((threadArgument*)arg)->masterPointer;
+    bool local = ((threadArgument*)arg)->local;
+
+    SocketIO* socket;
+    if (local)
+    {
+    	socket = evm->getLocalSocket();
+    }
+    else
+    {
+    	socket = evm->getNetworkSocket();
+    }
+
+    printf("Starting Thread, ID = %s\n", evm->getUniqueIdentifier().c_str());
+    void* data = malloc(4096);
+    Telegram telegram("");
+
+    time_t currTime = time(NULL);
+    while (true)
+    {
+        memset(data, 0, 4096);
+        int bytes = socket->receive(data, 4096);
+        telegram.deserialize(data);
+
+#ifdef DEBUG
+        unsigned char* data1 = (unsigned char*) data;
+		printf("Contents of Telegram:\n");
+		for (int i=0; i<bytes; i+=1)
+		{
+			printf("%2x ", *(data1+i));
+			if (i%16==0)
+			{
+				printf("\n");
+			}
+
+		}
+		printf("\n");
+#endif //DEBUG
+
+        if (stringCompare(telegram.getDestinationID(), id_master))
+        {
+        	std::string s;
+        	if (local)
+        	{
+        		Telegram_Register* telegram_reg = new Telegram_Register();
+        		telegram_reg->deserialize(data);
+        		s = (telegram_reg->getClientID());
+        		evm->addClient(s, telegram_reg->getClientAddress());
+        	}
+        	else
+        	{
+        		Telegram_Register_Extern* telegram_reg = new Telegram_Register_Extern();
+        		telegram_reg->deserialize(data);
+        		s = (telegram_reg->getClientID());
+        		evm->addClient(s, telegram_reg->getClientAddress());
+        	}
+            printf("Receive Thread:\nClient tries to register: %s\n", s.c_str());
+            if (stringCompare(s.c_str(), id_logger))
+            {
+            	evm->setLoggerConnected();
+            }
+
+        }
+        else if (stringCompare(telegram.getDestinationID(), id_logger))
+        {
+        	if (evm->isLoggerConnected())
+        	{
+        		evm->sendToClient(telegram.getDestinationID(), data, bytes);
+        	}
+        	Telegram_Log log;
+        	log.deserialize(data);
+            currTime = log.getTime();
+            printf("Receive Thread:\nOn %s: Message: %s, with %d bytes from %s\n", ctime(&currTime), log.getLog(), log.getSize(), log.getUniqueSourceID());
+        }
+        else
+        {
+            evm->sendToClient(telegram.getDestinationID(), data, bytes);
+        }
+
+
+    }
+    return ((void*) 0);
+}
+
 EventSystemMaster::EventSystemMaster() : master(666)
 {
 //    this->master = *(new SocketReaderMaster());
@@ -168,13 +259,22 @@ EventSystemMaster::EventSystemMaster() : master(666)
     int error;
     pthread_t connectThreadID;
     pthread_t connectThreadNetworkID;
-    error = pthread_create(&connectThreadID, NULL, checkForMessageLocal, this);
+
+    struct threadArgument arg_local, arg_network;
+
+    arg_local.local = true;
+    arg_network.local = false;
+    arg_local.masterPointer = this;
+    arg_network.masterPointer = this;
+
+    error = pthread_create(&connectThreadID, NULL, checkForMessage, &arg_local);
     if (error < 0)
 	{
 		exit (-1);
 	}
+    printf("Local message thread started\n");
+    sleep(1);
     error = pthread_create(&connectThreadNetworkID, NULL, checkForMessageNetwork, this);
-//    this->threadCheckMessageLocal = new std::thread(checkForMessageLocal);
     printf("Error: %d\n", error);
     if (error < 0)
     {
@@ -182,14 +282,8 @@ EventSystemMaster::EventSystemMaster() : master(666)
     }
     else
     {
-        sleep(1);
-/*        this->dataPointer = malloc(4096);
-        Telegram_Register testtele(*(SocketAddressLocal*)(this->master.getLocalSocket()->getAddress()), std::string("TEST"));
-        testtele.serialize(this->dataPointer);
-
-        Telegram_Register testtele2;
-        testtele2.deserialize(this->dataPointer);
-*/        printf("Event System Master successful created\n");
+    	printf("Network message thread started\n");
+    	printf("Event System Master successful created\n");
     }
 }
 
@@ -221,16 +315,6 @@ SocketIO_Network* EventSystemMaster::getNetworkSocket()
 SocketAddress* EventSystemMaster::getAddress()
 {
 	return this->master.getNetworkSocket()->getAddress();
-}
-
-void* EventSystemMaster::getDataPointer()
-{
-    return dataPointer;
-}
-
-void* EventSystemMaster::checkForMessage(void* arg)
-{
-	return nullptr;
 }
 
 void EventSystemMaster::addClient(std::string id, SocketAddressLocal* address)
@@ -294,4 +378,13 @@ void EventSystemMaster::sendToClient(std::string destination, void* data, int nu
 		}
 	}
 
+}
+
+void EventSystemMaster::setLoggerConnected()
+{
+	this->loggerConnected = true;
+}
+bool EventSystemMaster::isLoggerConnected()
+{
+	return this->loggerConnected;
 }

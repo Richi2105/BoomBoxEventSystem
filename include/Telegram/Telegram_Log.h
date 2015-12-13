@@ -7,6 +7,7 @@
 
 #include "Telegram.h"
 #include "../EventSystemParticipant.h"
+#include "../Logging/LoggerAdapter.h"
 
 #define LOG_MESSAGE_SIZE 250
 #define UNIQUEID_SIZE 30
@@ -14,13 +15,15 @@
 class Telegram_Log : public Telegram
 {
     public:
-        Telegram_Log(EventSystemParticipant* source, std::string log);
+        Telegram_Log(EventSystemParticipant* source, std::string log, LoggerAdapter::level_t level);
         Telegram_Log();
         virtual ~Telegram_Log();
         char* getLog();
+        void setLog(std::string log, LoggerAdapter::level_t level);
         time_t getTime();
         char* getSourceID();
         char* getUniqueSourceID();
+        LoggerAdapter::level_t getLevel();
 
         virtual int16_t getSerializedSize();
     	virtual int serialize(void* const data);
@@ -34,6 +37,7 @@ class Telegram_Log : public Telegram
         char log[LOG_MESSAGE_SIZE];
         char sourceID[ID_SIZE];
         char uniqueSourceID[UNIQUEID_SIZE];
+        LoggerAdapter::level_t level;
         time_t logtime;
 };
 

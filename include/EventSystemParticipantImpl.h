@@ -14,23 +14,35 @@
 class EventSystemParticipantImpl : public EventSystemParticipant
 {
     public:
-        EventSystemParticipantImpl(std::string);
-        EventSystemParticipantImpl(std::string, in_port_t port);
+        EventSystemParticipantImpl(std::string id);
+        EventSystemParticipantImpl(std::string id, in_port_t port);
         virtual ~EventSystemParticipantImpl();
+
         int connectToMaster();
         int connectToMaster(sockaddr_in address);
+
         std::string getIdentifier();
         std::string getUniqueIdentifier();
+
         SocketAddress* getAddress();
         void setAddress(sockaddr_in address, socklen_t len);
+
         virtual SocketIO* getSocket();
         void* getMessageMemory();
 
         void send(Telegram* telegram);
         int receive(void* data, bool nonblocking);
         void setMessageReceived(bool newMessage);
+
+        pthread_mutex_t* getMemoryMutex();
+        pthread_cond_t* getReceivedCondition();
     protected:
     private:
+        void init(std::string id);
+
+        pthread_mutex_t memoryMutex;
+        pthread_cond_t messageReceived;
+
         std::string id;
         Socket_Slave socket;
         void* messageMemory;    //Mutex!

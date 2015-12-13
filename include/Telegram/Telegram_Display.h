@@ -4,7 +4,7 @@
 #include <string>
 
 #include "Telegram.h"
-#include "/home/richard/workspace/DotMatrixDisplayOutput/include/DisplayPosition.h"
+#include "/home/richard/workspace/DotMatrixDisplayLib/include/DisplayPosition.h"
 //#include "Display/DisplayPosition.h"
 
 #define STRINGSIZE 22
@@ -25,7 +25,7 @@ class Telegram_Display : public Telegram
 
     protected:
     private:
-        DisplayPosition pos;
+        DisplayPosition pos;	//todo: abstract object in telegram
         char str[STRINGSIZE];
 };
 

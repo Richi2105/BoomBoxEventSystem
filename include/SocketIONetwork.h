@@ -20,6 +20,7 @@ class SocketIO_Network : public SocketIO
 {
 public:
 	SocketIO_Network(in_port_t port);
+	SocketIO_Network(sockaddr_in* address);
 	virtual ~SocketIO_Network();
 
 	virtual int send(void* data, int numOfBytes);

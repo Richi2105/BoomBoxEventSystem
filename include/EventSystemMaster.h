@@ -26,34 +26,42 @@ class EventSystemMaster : public EventSystemParticipant
 {
     public:
         EventSystemMaster();
+        EventSystemMaster(char* networkDevice);
         virtual ~EventSystemMaster();
 
         std::string getIdentifier();
         std::string getUniqueIdentifier();
+
         virtual SocketIO* getSocket();
         SocketIO_Local* getLocalSocket();
         SocketIO_Network* getNetworkSocket();
         virtual SocketAddress* getAddress();
+
         void addClient(std::string id, SocketAddressLocal* address);
         void addClient(std::string id, SocketAddressNetwork* address);
+
         void sendToClient(std::string destination, void* data, int numOfBytes);
 
-        void* getDataPointer();
+        void setLoggerConnected();
+        bool isLoggerConnected();
 
-        void* checkForMessage(void* arg);
     protected:
     private:
         std::thread* threadCheckMessageLocal;
         std::thread* threadCheckMessageNetwork;
+
         std::string id;
         std::string uniqueID;
+
         Socket_Master master;
+
         void* dataPointer;
+
         LocalClientMap localClients;
         NetworkClientMap networkClients;
         std::vector<std::string> clientRoles;
 
-
+        bool loggerConnected;
 };
 
 #endif // EVENTSYSTEMMASTER_H

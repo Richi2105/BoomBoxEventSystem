@@ -1,31 +1,32 @@
 #include "../include/Telegram/Telegram_Log.h"
 #include <OS_DEF.h>
 
-Telegram_Log::Telegram_Log(EventSystemParticipant* source, std::string log) : Telegram("LOGGER")
+Telegram_Log::Telegram_Log(EventSystemParticipant* source, std::string log, LoggerAdapter::level_t level) : Telegram("LOGGER")
 {
     this->logtime = time(NULL);
     printf("New Log Telegram on %s\n", ctime(&(this->logtime)));
-    //this->telegramSize += sizeof(time_t);
     memcpy(this->sourceID, source->getIdentifier().c_str(), source->getIdentifier().size());
-//            this->sourceID = source->getIdentifier();
-    //this->telegramSize += sizeof(char)*ID_SIZE;
     memcpy(this->uniqueSourceID, source->getUniqueIdentifier().c_str(), source->getUniqueIdentifier().size());
-//            this->uniqueSourceID = source->getUniqueIdentifier();
-    //this->telegramSize += sizeof(char)*UNIQUEID_SIZE;
     memcpy(this->log, log.c_str(), log.size());
-//            this->log = log;
-    //this->telegramSize += sizeof(char)*LOG_MESSAGE_SIZE;
+    this->level = level;
     this->telegramSize += sizeof(Telegram_Log);
 
 }
 Telegram_Log::Telegram_Log() : Telegram("LOGGER")
 {
 	this->logtime = time(NULL);
+	this->level = LoggerAdapter::INFO;
 }
 Telegram_Log::~Telegram_Log() {}
 char* Telegram_Log::getLog()
 {
     return this->log;
+}
+void Telegram_Log::setLog(std::string log, LoggerAdapter::level_t level)
+{
+	this->logtime = time(NULL);
+	memcpy(this->log, log.c_str(), log.size());
+	this->level = level;
 }
 time_t Telegram_Log::getTime()
 {
@@ -40,6 +41,11 @@ char* Telegram_Log::getUniqueSourceID()
     return this->uniqueSourceID;
 }
 
+LoggerAdapter::level_t Telegram_Log::getLevel()
+{
+	return this->level;
+}
+
 int16_t Telegram_Log::getSerializedSize()
 {
 	printf("Telegram_Log::getSerializedSize()\n");
@@ -48,6 +54,7 @@ int16_t Telegram_Log::getSerializedSize()
 	size += sizeof(this->log[0])*LOG_MESSAGE_SIZE;
 	size += sizeof(this->sourceID[0])*ID_SIZE;
 	size += sizeof(this->uniqueSourceID[0])*UNIQUEID_SIZE;
+	size += sizeof(this->level);
 	size += sizeof(this->logtime);
 
 	return size;
@@ -55,12 +62,12 @@ int16_t Telegram_Log::getSerializedSize()
 int Telegram_Log::serialize(void* const data)
 {
 	printf("Telegram_Log::serialize(void* const data)\n");
-	//void* data = malloc(this->getSerializedSize());
 	MEMUNIT* data2 = (MEMUNIT*)data;
 	data2 += Telegram::serialize(data2);
 	packNData(data2, this->log, LOG_MESSAGE_SIZE);
 	packNData(data2, this->sourceID, ID_SIZE);
 	packNData(data2, this->uniqueSourceID, UNIQUEID_SIZE);
+	packData(data2, this->level);
 	packData(data2, this->logtime);
 
 	return this->getSerializedSize();
@@ -73,6 +80,7 @@ int Telegram_Log::deserialize(void const * const data)
 	unpackNData(data2, this->log, LOG_MESSAGE_SIZE);
 	unpackNData(data2, this->sourceID, ID_SIZE);
 	unpackNData(data2, this->uniqueSourceID, UNIQUEID_SIZE);
+	unpackData(data2, this->level);
 	unpackData(data2, this->logtime);
 
 	return this->getSerializedSize();
