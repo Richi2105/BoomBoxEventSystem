@@ -54,7 +54,7 @@ SocketIO_Network::SocketIO_Network(in_port_t port) : myAddress()
 			char addressBuffer[INET_ADDRSTRLEN];
 			inet_ntop(AF_INET, tmpAddrPtr, addressBuffer, INET_ADDRSTRLEN);
 			printf("%s IP Address %s\n", ifa->ifa_name, addressBuffer);
-			if (!strncmp(addressBuffer, "192.168.3.", 10))
+			if (!strncmp(addressBuffer, "192.168.", 8))
 			{
 				mySockAddress.sin_addr = ((struct sockaddr_in *)ifa->ifa_addr)->sin_addr;
 				printf("Address saved\n");

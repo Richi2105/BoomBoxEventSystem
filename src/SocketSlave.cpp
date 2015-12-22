@@ -119,7 +119,7 @@ void Socket_Slave::connect(std::string id)
 //    		printf("Telegram initialized, source is %s", ((telegram_head*)telegram)->destinationID);
     	}
 
-    	this->send(data, telegram->getSize());
+    	this->send(data, telegram->getSerializedSize());
     }
 }
 
