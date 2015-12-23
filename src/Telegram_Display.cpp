@@ -30,7 +30,7 @@ char* Telegram_Display::getDisplayString()
 }
 int16_t Telegram_Display::getSerializedSize()
 {
-	printf("Telegram_Log::getSerializedSize()\n");
+	printf("Telegram_Display::getSerializedSize()\n");
 	int16_t size = 0;
 	size += Telegram::getSerializedSize();
 	size += this->pos.getSerializedSize();
@@ -40,7 +40,7 @@ int16_t Telegram_Display::getSerializedSize()
 }
 int Telegram_Display::serialize(void* const data)
 {
-	printf("Telegram_Log::serialize(void* const data)\n");
+	printf("Telegram_Display::serialize(void* const data)\n");
 	//void* data = malloc(this->getSerializedSize());
 	MEMUNIT* data2 = (MEMUNIT*)data;
 	data2 += Telegram::serialize(data2);
@@ -51,7 +51,7 @@ int Telegram_Display::serialize(void* const data)
 }
 int Telegram_Display::deserialize(void const * const data)
 {
-	printf("Telegram_Log::deserialize(void const * const data)\n");
+	printf("Telegram_Display::deserialize(void const * const data)\n");
 	const MEMUNIT* data2 = (MEMUNIT*)data;
 	data2 += Telegram::deserialize(data2);
 	data2 += this->pos.deserialize(data2);

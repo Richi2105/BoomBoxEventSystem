@@ -14,15 +14,15 @@ class LoggerAdapter {
 public:
 	virtual ~LoggerAdapter();
 
-	static enum level_t {INFO, WARNING, SEVERE} Level;
+	enum level_t {INFO, WARNING, SEVERE};
 
-	static void initLoggerAdapter(EventSystemParticipantImpl* espi);
+	static void initLoggerAdapter(EventSystemParticipant* espi);
 	static void log(LoggerAdapter::level_t level, std::string message);
 
 
 private:
 	LoggerAdapter();
-	static EventSystemParticipantImpl* espi;
+	static EventSystemParticipant* espi;
 };
 
 #endif /* INCLUDE_LOGGING_LOGGERADAPTER_H_ */

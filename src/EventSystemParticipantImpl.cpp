@@ -4,6 +4,10 @@
 #include "../include/Telegram/Telegram.h"
 #include "../include/Telegram/Telegram_Log.h"
 
+#include "../include/Telegram/TelegramObject.h"
+#include "../include/Register/RegisterNetwork.h"
+#include "../include/Register/RegisterLocal.h"
+
 #include "../include/EventSystemParticipantImpl.h"
 #include "../include/Logging/LoggerAdapter.h"
 
@@ -68,6 +72,19 @@ void EventSystemParticipantImpl::init(std::string id)
 
 EventSystemParticipantImpl::~EventSystemParticipantImpl()
 {
+	Serializeable* unreg;
+	if (this->socket.isLocal())
+	{
+		unreg = new EventSystem::Register_Local((SocketAddressLocal*)this->socket.getAddress(), this->id);
+	}
+	else
+	{
+		unreg = new EventSystem::Register_Network((SocketAddressNetwork*)this->socket.getAddress(), this->id);
+	}
+	Telegram::Telegram_Object* regTelegram = new Telegram::Telegram_Object("MASTER", unreg);
+	regTelegram->setType(Telegram::Telegram::UNREGISTER);
+	this->send(regTelegram);
+
     pthread_mutex_destroy(&this->memoryMutex);
     pthread_cond_destroy(&this->messageReceived);
 }
@@ -75,7 +92,11 @@ int EventSystemParticipantImpl::connectToMaster()
 {
 	if (this->socket.isLocal())
 	{
-		this->socket.connect(this->id);
+//		this->socket.connect(this->id);
+		EventSystem::Register_Local* reg = new EventSystem::Register_Local((SocketAddressLocal*)this->socket.getAddress(), this->id);
+		Telegram::Telegram_Object* regTelegram = new Telegram::Telegram_Object("MASTER", reg);
+		regTelegram->setType(Telegram::Telegram::REGISTER);
+		this->send(regTelegram);
 		return 0;
 	}
 	else
@@ -86,7 +107,11 @@ int EventSystemParticipantImpl::connectToMaster(sockaddr_in address)
 	if (!this->socket.isLocal())
 	{
 		this->socket.setAddress(address, sizeof(sockaddr_in));
-		this->socket.connect(this->id);
+//		this->socket.connect(this->id);
+		EventSystem::Register_Network* reg = new EventSystem::Register_Network((SocketAddressNetwork*)this->socket.getAddress(), this->id);
+		Telegram::Telegram_Object* regTelegram = new Telegram::Telegram_Object("MASTER", reg);
+		regTelegram->setType(Telegram::Telegram::REGISTER);
+		this->send(regTelegram);
 		return 0;
 	}
 	else
@@ -132,11 +157,16 @@ pthread_cond_t* EventSystemParticipantImpl::getReceivedCondition()
 	return &this->messageReceived;
 }
 
-void EventSystemParticipantImpl::send(Telegram* telegram)
+void EventSystemParticipantImpl::send(Telegram::Telegram* telegram)
 {
 	memset(this->sendMemory, 0, 4096);
 	int bytes = telegram->serialize(this->sendMemory);
     this->socket.send(this->sendMemory, bytes);
+}
+
+void EventSystemParticipantImpl::log(Telegram::Telegram_Object* log)
+{
+	this->send(log);
 }
 
 int EventSystemParticipantImpl::receive(void* data, bool nonblocking)

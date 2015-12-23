@@ -10,7 +10,7 @@
 #define STRINGSIZE 22
 
 
-class Telegram_Display : public Telegram
+class Telegram_Display : public Telegram::Telegram
 {
     public:
         Telegram_Display(DisplayPosition pos, std::string dispstr);

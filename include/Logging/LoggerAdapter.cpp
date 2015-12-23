@@ -7,7 +7,8 @@
 
 #include "LoggerAdapter.h"
 #include "../Telegram/Telegram_Log.h"
-#include "../Telegram/Telegram.h"
+#include "Log.h"
+#include "../Telegram/TelegramObject.h"
 #include <stdio.h>
 
 LoggerAdapter::LoggerAdapter() {
@@ -19,9 +20,9 @@ LoggerAdapter::~LoggerAdapter() {
 	// TODO Auto-generated destructor stub
 }
 
-EventSystemParticipantImpl* LoggerAdapter::espi = nullptr;
+EventSystemParticipant* LoggerAdapter::espi = nullptr;
 
-void LoggerAdapter::initLoggerAdapter(EventSystemParticipantImpl* espi)
+void LoggerAdapter::initLoggerAdapter(EventSystemParticipant* espi)
 {
 	LoggerAdapter::espi = espi;
 }
@@ -41,8 +42,11 @@ void LoggerAdapter::log(LoggerAdapter::level_t level, std::string message)
 	}
 	else
 	{
-		Telegram* telegram = new Telegram_Log(LoggerAdapter::espi, message, level);
-		espi->send(telegram);
+		EventSystem::Log* log = new EventSystem::Log(LoggerAdapter::espi, message, level);
+		Telegram::Telegram_Object* objTelegram = new Telegram::Telegram_Object("LOGGER", log);
+		objTelegram->setType(Telegram::Telegram::LOG);
+		//Telegram::Telegram* telegram = new Telegram_Log(LoggerAdapter::espi, message, level);
+		espi->log(objTelegram);
 	}
 }
 

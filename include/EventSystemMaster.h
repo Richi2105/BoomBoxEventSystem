@@ -29,8 +29,8 @@ class EventSystemMaster : public EventSystemParticipant
         EventSystemMaster(char* networkDevice);
         virtual ~EventSystemMaster();
 
-        std::string getIdentifier();
-        std::string getUniqueIdentifier();
+        virtual std::string getIdentifier();
+        virtual std::string getUniqueIdentifier();
 
         virtual SocketIO* getSocket();
         SocketIO_Local* getLocalSocket();
@@ -40,7 +40,11 @@ class EventSystemMaster : public EventSystemParticipant
         void addClient(std::string id, SocketAddressLocal* address);
         void addClient(std::string id, SocketAddressNetwork* address);
 
+        void removeClient(std::string id, SocketAddressLocal* remAddress);
+        void removeClient(std::string id, SocketAddressNetwork* remAddress);
+
         void sendToClient(std::string destination, void* data, int numOfBytes);
+        virtual void log(Telegram::Telegram_Object* log);
 
         void setLoggerConnected();
         bool isLoggerConnected();

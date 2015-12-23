@@ -39,7 +39,7 @@ EventSystemLogger::EventSystemLogger()
     this->slave.connect(this->id);
     int error;
     pthread_t connectThreadID;
-    error = pthread_create(&connectThreadID, NULL, log, this);
+//    error = pthread_create(&connectThreadID, NULL, log, this);
     printf("Error: %d\n", error);
     if (error < 0)
     {

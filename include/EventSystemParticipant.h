@@ -7,6 +7,8 @@
 #include "SocketIOLocal.h"
 #include "SocketAddress.h"
 
+#include "Telegram/TelegramObject.h"
+
 class EventSystemParticipant
 {
     public:
@@ -15,6 +17,7 @@ class EventSystemParticipant
         virtual std::string getUniqueIdentifier() = 0;
         virtual SocketAddress* getAddress() = 0;
         virtual SocketIO* getSocket() = 0;
+        virtual void log(Telegram::Telegram_Object* log) = 0;
 
 //        virtual int receive(bool nonblocking, Telegram* telegram) = 0;
 //        virtual int send(Telegram* telegram) = 0;

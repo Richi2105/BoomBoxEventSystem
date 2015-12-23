@@ -13,6 +13,9 @@
 #include "../include/Telegram/Telegram_Register.h"
 #include "../include/Telegram/Telegram_Register_Extern.h"
 
+#include "../include/Register/RegisterLocal.h"
+#include "../include/Telegram/TelegramObject.h"
+
 #include "../include/SocketIOLocal.h"
 #include "../include/SocketIONetwork.h"
 
@@ -90,13 +93,14 @@ void Socket_Slave::connect(std::string id)
     }
     else
     {
-    	Telegram* telegram;
+    	Telegram::Telegram_Object* telegram;
     	void* data;
 //    	void* telegram = malloc(sizeof(telegram_register_network));
 //    	memset(telegram, 0, sizeof(telegram_register_network));
     	if (this->local)
     	{
-			telegram = new Telegram_Register(*(SocketAddressLocal*)this->socket->getAddress(), id);
+    		EventSystem::Register_Local* reg = new EventSystem::Register_Local((SocketAddressLocal*)this->socket->getAddress(), id);
+//			telegram = new Telegram_Register(*(SocketAddressLocal*)this->socket->getAddress(), id);
 			printf("telegram initialized\n");
 			data = malloc(telegram->getSerializedSize());
 			printf("data allocated\n");
@@ -109,7 +113,7 @@ void Socket_Slave::connect(std::string id)
     	}
     	else
     	{
-    		telegram = new Telegram_Register_Extern(*(SocketAddressNetwork*)this->socket->getAddress(), id);
+//    		telegram = new Telegram_Register_Extern(*(SocketAddressNetwork*)this->socket->getAddress(), id);
     		data = malloc(telegram->getSerializedSize());
     		((Telegram_Register_Extern*)telegram)->serialize(data);
     		printf("Telegram initialized, source is %s\n", ((Telegram_Register_Extern*)telegram)->getClientID());

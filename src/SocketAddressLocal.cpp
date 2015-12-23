@@ -63,6 +63,24 @@ void SocketAddressLocal::convertTo_Struct(void* address)
 
 }
 
+bool SocketAddressLocal::isEqual(SocketAddressLocal* address)
+{
+	int result = strcmp(this->address.sun_path, address->address.sun_path);
+	if (result != 0)
+	{
+		return false;
+	}
+	else
+	{
+		return true;
+	}
+}
+
+bool SocketAddressLocal::operator==(SocketAddressLocal* address)
+{
+	return this->isEqual(address);
+}
+
 int16_t SocketAddressLocal::getSerializedSize()
 {
 	printf("in SocketAddressLocal::getSerializedSize()\n");

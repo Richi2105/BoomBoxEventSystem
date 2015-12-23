@@ -5,14 +5,13 @@
 #include <time.h>
 #include <stdio.h>
 
+#include "../constants.h"
+
 #include "Telegram.h"
 #include "../EventSystemParticipant.h"
 #include "../Logging/LoggerAdapter.h"
 
-#define LOG_MESSAGE_SIZE 250
-#define UNIQUEID_SIZE 30
-
-class Telegram_Log : public Telegram
+class Telegram_Log : public Telegram::Telegram
 {
     public:
         Telegram_Log(EventSystemParticipant* source, std::string log, LoggerAdapter::level_t level);

@@ -30,7 +30,8 @@ class EventSystemParticipantImpl : public EventSystemParticipant
         virtual SocketIO* getSocket();
         void* getMessageMemory();
 
-        void send(Telegram* telegram);
+        void send(Telegram::Telegram* telegram);
+        virtual void log(Telegram::Telegram_Object* log);
         int receive(void* data, bool nonblocking);
         void setMessageReceived(bool newMessage);
 

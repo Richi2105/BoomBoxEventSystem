@@ -22,6 +22,8 @@ class EventSystemLogger : public EventSystemParticipant
 
         SocketIO* getSocket();
 
+        void log();
+
     protected:
     private:
         std::string id;

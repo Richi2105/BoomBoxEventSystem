@@ -27,6 +27,10 @@ public:
 
 	virtual void convertTo_Struct(void* address);
 
+	bool isEqual(SocketAddressLocal* address);
+
+	bool operator==(SocketAddressLocal* address);
+
 	virtual int16_t getSerializedSize();
 	virtual int serialize(void* const data);
 	virtual int deserialize(void const * const data);

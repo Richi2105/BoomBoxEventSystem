@@ -12,7 +12,7 @@
 #include "Telegram.h"
 
 
-class Telegram_Register_Extern : public Telegram
+class Telegram_Register_Extern : public Telegram::Telegram
 {
     public:
         Telegram_Register_Extern(SocketAddressNetwork clientAddress, std::string id);

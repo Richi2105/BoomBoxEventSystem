@@ -62,6 +62,23 @@ void SocketAddressNetwork::convertTo_Struct(void* address)
 	((socketAddress_network*)address)->len = this->len;
 }
 
+bool SocketAddressNetwork::isEqual(SocketAddressNetwork* address)
+{
+	if (this->address.sin_addr.s_addr != address->address.sin_addr.s_addr)
+	{
+		return false;
+	}
+	else
+	{
+		return true;
+	}
+}
+
+bool SocketAddressNetwork::operator==(SocketAddressNetwork* address)
+{
+	return this->isEqual(address);
+}
+
 int16_t SocketAddressNetwork::getSerializedSize()
 {
 	int16_t size = 0;

@@ -3,6 +3,9 @@
 #include <OS_DEF.h>
 #include "../include/Telegram/Telegram.h"
 
+namespace Telegram
+{
+
 Telegram::Telegram(std::string identifier)
 {
 //            this->destinationID = identifier;
@@ -26,12 +29,12 @@ int Telegram::getSize()
     return this->telegramSize;
 }
 
-telegram_type Telegram::getType()
+Telegram::telegram_type Telegram::getType()
 {
 	return this->type;
 }
 
-void Telegram::setType(telegram_type type)
+void Telegram::setType(Telegram::telegram_type type)
 {
 	this->type = type;
 }
@@ -71,6 +74,8 @@ int Telegram::deserialize(void const * const data)
 
 	return Telegram::getSerializedSize();
 }
+
+} /* namespace Telegram */
 
 void initTelegram(telegram_head* telegram, std::string* id)
 {
