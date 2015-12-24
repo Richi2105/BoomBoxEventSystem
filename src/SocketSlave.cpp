@@ -32,10 +32,10 @@ Socket_Slave::Socket_Slave()
     this->local = true;
 }
 
-Socket_Slave::Socket_Slave(in_port_t port)
+Socket_Slave::Socket_Slave(in_port_t port, char* networkDevice)
 {
 	printf("Creating Socket_Slave(%d)\n", port);
-	this->socket = new SocketIO_Network(port);
+	this->socket = new SocketIO_Network(port, NULL);
 	this->masterAddress = new SocketAddressNetwork();
 	this->local = false;
 }
@@ -48,6 +48,7 @@ Socket_Slave::~Socket_Slave()
 int Socket_Slave::send(void* data, int numOfBytes)
 {
 	unsigned char* data1 = (unsigned char*) data;
+#ifdef DEBUG
 	printf("Contents of Telegram\n");
 	for (int i=0; i<numOfBytes; i+=1)
 	{
@@ -58,6 +59,7 @@ int Socket_Slave::send(void* data, int numOfBytes)
 		}
 
 	}
+#endif //DEBUG
     return sendto(this->socket->getSocketFileDescriptor(), data, numOfBytes, 0, this->masterAddress->getAddress(), this->masterAddress->getLen());
 }
 
@@ -82,49 +84,6 @@ SocketAddress* Socket_Slave::getAddress()
 SocketIO* Socket_Slave::getSocket()
 {
 	return this->socket;
-}
-
-void Socket_Slave::connect(std::string id)
-{
-    printf("connecting...\n");
-    if (this->masterAddress->getAddress() == nullptr)
-    {
-    	printf("nothing to connect to, set Address first\n");
-    }
-    else
-    {
-    	Telegram::Telegram_Object* telegram;
-    	void* data;
-//    	void* telegram = malloc(sizeof(telegram_register_network));
-//    	memset(telegram, 0, sizeof(telegram_register_network));
-    	if (this->local)
-    	{
-    		EventSystem::Register_Local* reg = new EventSystem::Register_Local((SocketAddressLocal*)this->socket->getAddress(), id);
-//			telegram = new Telegram_Register(*(SocketAddressLocal*)this->socket->getAddress(), id);
-			printf("telegram initialized\n");
-			data = malloc(telegram->getSerializedSize());
-			printf("data allocated\n");
-			((Telegram_Register*)telegram)->serialize(data);
-			printf("Telegram initialized, source is %s\n", ((Telegram_Register*)telegram)->getClientID());
-//    		socketAddress_local addr;
-//    		this->masterAddress->convertTo_Struct((void*) &addr);
-//    		initTelegram_Register_Local((telegram_register_local*) telegram, &addr,	&id);
-//    		printf("Telegram initialized, source is %s", ((telegram_head*)telegram)->destinationID);
-    	}
-    	else
-    	{
-//    		telegram = new Telegram_Register_Extern(*(SocketAddressNetwork*)this->socket->getAddress(), id);
-    		data = malloc(telegram->getSerializedSize());
-    		((Telegram_Register_Extern*)telegram)->serialize(data);
-    		printf("Telegram initialized, source is %s\n", ((Telegram_Register_Extern*)telegram)->getClientID());
-//    		socketAddress_network addr;
-//    		this->masterAddress->convertTo_Struct((void*) &addr);
-//    		initTelegram_Register_Network((telegram_register_network*) telegram, &addr,	&id);
-//    		printf("Telegram initialized, source is %s", ((telegram_head*)telegram)->destinationID);
-    	}
-
-    	this->send(data, telegram->getSerializedSize());
-    }
 }
 
 void Socket_Slave::getAddressFromSharedMemory(SocketAddressLocal** address)
@@ -158,11 +117,6 @@ void Socket_Slave::getAddressFromSharedMemory(SocketAddressLocal** address)
 	(*address) = new SocketAddressLocal(*(SocketAddressLocal*) mapAddress);
 
 	printf("%s\n", ((sockaddr_un*)(*address)->getAddress())->sun_path);
-	//memcpy(address, mapAddress, sizeof(SocketAddressLocal));
-	//sockaddr* sockaddr = esaddress->getAddress();
-	//address->setAddress(sockaddr, esaddress->getLen());
-
-//	printf("connected to: %s, with len %d\n", ((sockaddr_un*)((SocketAddressLocal*)mapAddress)->getAddress())->sun_path, ((SocketAddressLocal*)mapAddress)->getLen());
 
 	close(fd);
 }

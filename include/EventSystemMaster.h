@@ -14,6 +14,9 @@
 
 #include "SocketMaster.h"
 
+namespace EventSystem
+{
+
 typedef std::vector<SocketAddressLocal> LocalClientVector;
 typedef std::vector<SocketAddressNetwork> NetworkClientVector;
 typedef std::map<std::string, LocalClientVector> LocalClientMap;
@@ -22,50 +25,65 @@ typedef std::map<std::string, NetworkClientVector> NetworkClientMap;
 
 typedef void* (threadfunction)(void* arg);
 
+/**
+ * this class holds two sockets, local and network
+ * has 2 threads for receiving messages, directs messages to connected clients
+ */
 class EventSystemMaster : public EventSystemParticipant
 {
-    public:
-        EventSystemMaster();
-        EventSystemMaster(char* networkDevice);
-        virtual ~EventSystemMaster();
+public:
+	/**
+	 * construct a default master
+	 */
+	EventSystemMaster();
 
-        virtual std::string getIdentifier();
-        virtual std::string getUniqueIdentifier();
+	/**
+	 * specify a network device, like eth0 or wlan0
+	 */
+	EventSystemMaster(char* networkDevice);
+	virtual ~EventSystemMaster();
 
-        virtual SocketIO* getSocket();
-        SocketIO_Local* getLocalSocket();
-        SocketIO_Network* getNetworkSocket();
-        virtual SocketAddress* getAddress();
+	virtual std::string getIdentifier();
+	virtual std::string getUniqueIdentifier();
 
-        void addClient(std::string id, SocketAddressLocal* address);
-        void addClient(std::string id, SocketAddressNetwork* address);
+	virtual SocketIO* getSocket();
+	SocketIO_Local* getLocalSocket();
+	SocketIO_Network* getNetworkSocket();
+	virtual SocketAddress* getAddress();
 
-        void removeClient(std::string id, SocketAddressLocal* remAddress);
-        void removeClient(std::string id, SocketAddressNetwork* remAddress);
+	void addClient(std::string id, SocketAddressLocal* address);
+	void addClient(std::string id, SocketAddressNetwork* address);
 
-        void sendToClient(std::string destination, void* data, int numOfBytes);
-        virtual void log(Telegram::Telegram_Object* log);
+	void removeClient(std::string id, SocketAddressLocal* remAddress);
+	void removeClient(std::string id, SocketAddressNetwork* remAddress);
 
-        void setLoggerConnected();
-        bool isLoggerConnected();
+	void sendToClient(std::string destination, void* data, int numOfBytes);
+	virtual void log(Telegram_Object* log);
 
-    protected:
-    private:
-        std::thread* threadCheckMessageLocal;
-        std::thread* threadCheckMessageNetwork;
+	void setLoggerConnected();
+	bool isLoggerConnected();
 
-        std::string id;
-        std::string uniqueID;
+protected:
+private:
+	void init();
 
-        Socket_Master master;
+	std::thread* threadCheckMessageLocal;
+	std::thread* threadCheckMessageNetwork;
 
-        void* dataPointer;
+	std::string id;
+	std::string uniqueID;
 
-        LocalClientMap localClients;
-        NetworkClientMap networkClients;
-        std::vector<std::string> clientRoles;
+	Socket_Master master;
 
-        bool loggerConnected;
+	void* dataPointer;
+
+	LocalClientMap localClients;
+	NetworkClientMap networkClients;
+	std::vector<std::string> clientRoles;
+
+	bool loggerConnected;
 };
+
+} /* namespace EventSystem */
 
 #endif // EVENTSYSTEMMASTER_H

@@ -1,7 +1,7 @@
 #include "../include/Telegram/Telegram_Log.h"
 #include <OS_DEF.h>
 
-Telegram_Log::Telegram_Log(EventSystemParticipant* source, std::string log, LoggerAdapter::level_t level) : Telegram("LOGGER")
+Telegram_Log::Telegram_Log(EventSystemParticipant* source, std::string log, EventSystem::LoggerAdapter::level_t level) : Telegram("LOGGER")
 {
     this->logtime = time(NULL);
     printf("New Log Telegram on %s\n", ctime(&(this->logtime)));
@@ -15,14 +15,14 @@ Telegram_Log::Telegram_Log(EventSystemParticipant* source, std::string log, Logg
 Telegram_Log::Telegram_Log() : Telegram("LOGGER")
 {
 	this->logtime = time(NULL);
-	this->level = LoggerAdapter::INFO;
+	this->level = EventSystem::LoggerAdapter::INFO;
 }
 Telegram_Log::~Telegram_Log() {}
 char* Telegram_Log::getLog()
 {
     return this->log;
 }
-void Telegram_Log::setLog(std::string log, LoggerAdapter::level_t level)
+void Telegram_Log::setLog(std::string log, EventSystem::LoggerAdapter::level_t level)
 {
 	this->logtime = time(NULL);
 	memcpy(this->log, log.c_str(), log.size());
@@ -41,7 +41,7 @@ char* Telegram_Log::getUniqueSourceID()
     return this->uniqueSourceID;
 }
 
-LoggerAdapter::level_t Telegram_Log::getLevel()
+EventSystem::LoggerAdapter::level_t Telegram_Log::getLevel()
 {
 	return this->level;
 }
@@ -86,18 +86,3 @@ int Telegram_Log::deserialize(void const * const data)
 	return this->getSerializedSize();
 }
 
-void initTelegram_log(telegram_log* telegram, EventSystemParticipant* source, std::string* log)
-{
-	initTelegram(&telegram->header, new std::string("LOGGER"));
-	telegram->header.telegramSize = sizeof(telegram_log);
-	memcpy(telegram->sourceID, source->getIdentifier().c_str(), source->getIdentifier().size());
-	memcpy(telegram->uniqueSourceID, source->getUniqueIdentifier().c_str(), source->getUniqueIdentifier().size());
-	memcpy(telegram->log, log->c_str(), log->size());
-	telegram->logTime = time(NULL);
-}
-
-void setLog_Telegram_log(telegram_log* telegram, std::string* log)
-{
-	memcpy(telegram->log, log->c_str(), log->size());
-	telegram->logTime = time(NULL);
-}

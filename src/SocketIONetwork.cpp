@@ -19,7 +19,7 @@
 #include <stdlib.h>
 
 
-SocketIO_Network::SocketIO_Network(in_port_t port) : myAddress()
+SocketIO_Network::SocketIO_Network(in_port_t port, char* device) : myAddress()
 {
 	printf("Creating SocketIO_Network(%d)\n", port);
 	char uid[25];
@@ -54,12 +54,25 @@ SocketIO_Network::SocketIO_Network(in_port_t port) : myAddress()
 			char addressBuffer[INET_ADDRSTRLEN];
 			inet_ntop(AF_INET, tmpAddrPtr, addressBuffer, INET_ADDRSTRLEN);
 			printf("%s IP Address %s\n", ifa->ifa_name, addressBuffer);
-			if (!strncmp(addressBuffer, "192.168.", 8))
+			if (device == nullptr)
 			{
-				mySockAddress.sin_addr = ((struct sockaddr_in *)ifa->ifa_addr)->sin_addr;
-				printf("Address saved\n");
-				memcpy(address, addressBuffer, INET_ADDRSTRLEN);
+				if (!strncmp(addressBuffer, "192.168.", 8))
+				{
+					mySockAddress.sin_addr = ((struct sockaddr_in *)ifa->ifa_addr)->sin_addr;
+					printf("Address saved\n");
+					memcpy(address, addressBuffer, INET_ADDRSTRLEN);
+				}
 			}
+			else
+			{
+				if (!strcmp(device, ifa->ifa_name))
+				{
+					mySockAddress.sin_addr = ((struct sockaddr_in *)ifa->ifa_addr)->sin_addr;
+					printf("Address saved\n");
+					memcpy(address, addressBuffer, INET_ADDRSTRLEN);
+				}
+			}
+
 		}
 		else if (ifa->ifa_addr->sa_family == AF_INET6)
 		{ // check it is IP6

@@ -15,7 +15,14 @@
 Socket_Master::Socket_Master(in_port_t port)
 {
     this->localSocket = new SocketIO_Local();
-    this->networkSocket = new SocketIO_Network(port);
+    this->networkSocket = new SocketIO_Network(port, NULL);
+    this->mapAddress = NULL;
+}
+
+Socket_Master::Socket_Master(char* networkDevice, in_port_t port)
+{
+    this->localSocket = new SocketIO_Local();
+    this->networkSocket = new SocketIO_Network(port, networkDevice);
     this->mapAddress = NULL;
 }
 

@@ -5,14 +5,11 @@
 #include <string>
 #include <string.h>
 #include <stdint.h>
+#include "../constants.h"
 #include "../Serializeable.h"
 
-namespace Telegram
+namespace EventSystem
 {
-
-#define ID_SIZE 20
-
-
 
 class Telegram : public Serializeable
 {
@@ -38,17 +35,6 @@ class Telegram : public Serializeable
         int telegramSize;
 };
 
-} /* namespace Telegram */
-
-
-
-struct _telegram{
-	int8_t destinationID[ID_SIZE];
-	int16_t telegramSize;
-};
-
-typedef struct _telegram telegram_head;
-
-void initTelegram(telegram_head* telegram, std::string* id);
+} /* namespace EventSystem */
 
 #endif // TELEGRAM_H

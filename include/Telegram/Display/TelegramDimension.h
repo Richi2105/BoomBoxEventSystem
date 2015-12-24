@@ -10,7 +10,7 @@
 
 #include "../Telegram.h"
 
-class Telegram_Dimension : public Telegram::Telegram
+class Telegram_Dimension : public EventSystem::Telegram
 {
 public:
 	Telegram_Dimension(int x, int y);

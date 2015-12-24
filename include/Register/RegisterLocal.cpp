@@ -35,7 +35,6 @@ char* Register_Local::getClientID()
 
 int16_t Register_Local::getSerializedSize()
 {
-	printf("Register_Local::getSerializedSize()\n");
 	int16_t size = 0;
 	size += sizeof(this->clientID[0])*ID_SIZE;
 	size += this->clientAddress->getSerializedSize();

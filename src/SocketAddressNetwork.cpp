@@ -95,7 +95,7 @@ int SocketAddressNetwork::serialize(void* const data)
 {
 	//void* data = malloc(this->getSerializedSize());
 	MEMUNIT* data2 = (MEMUNIT*)data;
-	printf("in fuction serialize()\nPointer to data: %p\n", data);
+	printf("SocketAddressNetwork::serialize()\n");
 	packData(data2, this->address.sin_addr.s_addr);
 	packData(data2, this->address.sin_family);
 	packData(data2, this->address.sin_port);
@@ -107,7 +107,7 @@ int SocketAddressNetwork::serialize(void* const data)
 int SocketAddressNetwork::deserialize(void const * const data)
 {
 	const MEMUNIT* data2 = (MEMUNIT*)data;
-	printf("in fuction deserialize()\nPointer to data: %p\n", data2);
+	printf("SocketAddressNetwork::deserialize()\n");
 	unpackData(data2, this->address.sin_addr.s_addr);
 	unpackData(data2, this->address.sin_family);
 	unpackData(data2, this->address.sin_port);

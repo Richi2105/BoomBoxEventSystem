@@ -55,10 +55,3 @@ int Telegram_Register_Extern::deserialize(void const * const data)
 	return this->getSerializedSize();
 }
 
-void initTelegram_Register_Network(telegram_register_network* telegram, socketAddress_network address, std::string* clientID)
-{
-	initTelegram(&telegram->header, new std::string("MASTER"));
-	telegram->header.telegramSize = sizeof(telegram_register_network);
-	telegram->address = address;
-	memcpy(telegram->clientID, clientID->c_str(), ID_SIZE < clientID->size() ? ID_SIZE : clientID->size());
-}

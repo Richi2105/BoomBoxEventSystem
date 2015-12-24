@@ -23,6 +23,18 @@
  */
 #define LOG_MESSAGE_SIZE 250
 
+/**
+ * maximum telegram size, default data allocation size
+ */
+#define DATASIZE 4096
+
+/**
+ * the standard port for network communication
+ * 26901: Eve Online
+ * 27000: QuakeWorkld
+ */
+#define PORT 26999
+
 
 
 

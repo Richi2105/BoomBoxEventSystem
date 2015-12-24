@@ -12,7 +12,7 @@
 #include "SocketAddress.h"
 #include "Serializeable.h"
 
-class SocketAddressLocal: public SocketAddress, Serializeable
+class SocketAddressLocal : public SocketAddress, Serializeable
 {
 public:
 	SocketAddressLocal(sockaddr_un address, socklen_t len);

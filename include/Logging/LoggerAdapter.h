@@ -8,7 +8,10 @@
 #ifndef INCLUDE_LOGGING_LOGGERADAPTER_H_
 #define INCLUDE_LOGGING_LOGGERADAPTER_H_
 
-#include "../EventSystemParticipantImpl.h"
+#include "../EventSystemParticipant.h"
+
+namespace EventSystem
+{
 
 class LoggerAdapter {
 public:
@@ -24,5 +27,7 @@ private:
 	LoggerAdapter();
 	static EventSystemParticipant* espi;
 };
+
+} /* namespace EventSystem */
 
 #endif /* INCLUDE_LOGGING_LOGGERADAPTER_H_ */

@@ -10,7 +10,7 @@
 #define STRINGSIZE 22
 
 
-class Telegram_Display : public Telegram::Telegram
+class Telegram_Display : public EventSystem::Telegram
 {
     public:
         Telegram_Display(DisplayPosition pos, std::string dispstr);
@@ -28,16 +28,5 @@ class Telegram_Display : public Telegram::Telegram
         DisplayPosition pos;	//todo: abstract object in telegram
         char str[STRINGSIZE];
 };
-
-struct _telegram_display{
-	telegram_head header;
-	int8_t displayString[STRINGSIZE];
-	uint8_t xpos;
-	uint8_t ypos;
-};
-
-typedef struct _telegram_display telegram_display;
-
-void initTelegram_Display(telegram_display* telegram, DisplayPosition* pos, std::string* dispstr);
 
 #endif // TELEGRAM_DISPLAY_H

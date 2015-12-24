@@ -8,12 +8,15 @@
 #include "../include/Register/RegisterNetwork.h"
 #include "../include/Register/RegisterLocal.h"
 
-#include "../include/EventSystemParticipantImpl.h"
+#include "../include/EventSystemClient.h"
 #include "../include/Logging/LoggerAdapter.h"
+
+namespace EventSystem
+{
 
 void* checkForMessageD(void* eventSystemPart)
 {
-    EventSystemParticipantImpl* evp = (EventSystemParticipantImpl*) eventSystemPart;
+	EventSystemClient* evp = (EventSystemClient*) eventSystemPart;
     printf("EventSysPartImpl_Thread: %s\n", evp->getUniqueIdentifier().c_str());
     void* espData = evp->getMessageMemory();
     void* data = malloc(4096);
@@ -34,23 +37,24 @@ void* checkForMessageD(void* eventSystemPart)
     return ((void*) 0);
 }
 
-EventSystemParticipantImpl::EventSystemParticipantImpl(std::string id) : socket()
+EventSystemClient::EventSystemClient(std::string id) : socket()
 {
 	this->init(id);
 }
 
-EventSystemParticipantImpl::EventSystemParticipantImpl(std::string id, in_port_t port) : socket(port)
+EventSystemClient::EventSystemClient(std::string id, in_port_t port, char* networkDevice) : socket(port, networkDevice)
 {
 	this->init(id);
 }
 
-void EventSystemParticipantImpl::init(std::string id)
+void EventSystemClient::init(std::string id)
 {
 	printf("building %s Participant...\n", id.c_str());
 
 	this->id = id;
 	this->messageMemory = malloc(4096);
 	this->sendMemory = malloc(4096);
+	this->newMessage = false;
 	int error;
 
 	LoggerAdapter::initLoggerAdapter(this);
@@ -70,106 +74,104 @@ void EventSystemParticipantImpl::init(std::string id)
 	}
 }
 
-EventSystemParticipantImpl::~EventSystemParticipantImpl()
+EventSystemClient::~EventSystemClient()
 {
 	Serializeable* unreg;
 	if (this->socket.isLocal())
 	{
-		unreg = new EventSystem::Register_Local((SocketAddressLocal*)this->socket.getAddress(), this->id);
+		unreg = new Register_Local((SocketAddressLocal*)this->socket.getAddress(), this->id);
 	}
 	else
 	{
-		unreg = new EventSystem::Register_Network((SocketAddressNetwork*)this->socket.getAddress(), this->id);
+		unreg = new Register_Network((SocketAddressNetwork*)this->socket.getAddress(), this->id);
 	}
-	Telegram::Telegram_Object* regTelegram = new Telegram::Telegram_Object("MASTER", unreg);
-	regTelegram->setType(Telegram::Telegram::UNREGISTER);
+	Telegram_Object* regTelegram = new Telegram_Object("MASTER", unreg);
+	regTelegram->setType(Telegram::UNREGISTER);
 	this->send(regTelegram);
 
     pthread_mutex_destroy(&this->memoryMutex);
     pthread_cond_destroy(&this->messageReceived);
 }
-int EventSystemParticipantImpl::connectToMaster()
+int EventSystemClient::connectToMaster()
 {
 	if (this->socket.isLocal())
 	{
-//		this->socket.connect(this->id);
-		EventSystem::Register_Local* reg = new EventSystem::Register_Local((SocketAddressLocal*)this->socket.getAddress(), this->id);
-		Telegram::Telegram_Object* regTelegram = new Telegram::Telegram_Object("MASTER", reg);
-		regTelegram->setType(Telegram::Telegram::REGISTER);
+		Register_Local* reg = new Register_Local((SocketAddressLocal*)this->socket.getAddress(), this->id);
+		Telegram_Object* regTelegram = new Telegram_Object("MASTER", reg);
+		regTelegram->setType(Telegram::REGISTER);
 		this->send(regTelegram);
 		return 0;
 	}
 	else
 		return -1;
 }
-int EventSystemParticipantImpl::connectToMaster(sockaddr_in address)
+int EventSystemClient::connectToMaster(sockaddr_in address)
 {
 	if (!this->socket.isLocal())
 	{
 		this->socket.setAddress(address, sizeof(sockaddr_in));
-//		this->socket.connect(this->id);
-		EventSystem::Register_Network* reg = new EventSystem::Register_Network((SocketAddressNetwork*)this->socket.getAddress(), this->id);
-		Telegram::Telegram_Object* regTelegram = new Telegram::Telegram_Object("MASTER", reg);
-		regTelegram->setType(Telegram::Telegram::REGISTER);
+		Register_Network* reg = new Register_Network((SocketAddressNetwork*)this->socket.getAddress(), this->id);
+		Telegram_Object* regTelegram = new Telegram_Object("MASTER", reg);
+		regTelegram->setType(Telegram::REGISTER);
 		this->send(regTelegram);
 		return 0;
 	}
 	else
 		return -1;
 }
-std::string EventSystemParticipantImpl::getIdentifier()
+std::string EventSystemClient::getIdentifier()
 {
     return this->id;
 }
-std::string EventSystemParticipantImpl::getUniqueIdentifier()
+std::string EventSystemClient::getUniqueIdentifier()
 {
     return (this->socket.getSocket()->getUniqueID() + "__" + this->id);
 }
-void EventSystemParticipantImpl::setAddress(sockaddr_in address, socklen_t len)
+void EventSystemClient::setAddress(sockaddr_in address, socklen_t len)
 {
 	this->socket.setAddress(address, len);
 }
-SocketAddress* EventSystemParticipantImpl::getAddress()
+SocketAddress* EventSystemClient::getAddress()
 {
     return this->socket.getAddress();
 }
-SocketIO* EventSystemParticipantImpl::getSocket()
+SocketIO* EventSystemClient::getSocket()
 {
     return this->socket.getSocket();
 }
-void* EventSystemParticipantImpl::getMessageMemory()
+void* EventSystemClient::getMessageMemory()
 {
     return this->messageMemory;
 }
 
-void EventSystemParticipantImpl::setMessageReceived(bool newMessage)
+void EventSystemClient::setMessageReceived(bool newMessage)
 {
     this->newMessage = newMessage;
 }
 
-pthread_mutex_t* EventSystemParticipantImpl::getMemoryMutex()
+pthread_mutex_t* EventSystemClient::getMemoryMutex()
 {
 	return &this->memoryMutex;
 }
 
-pthread_cond_t* EventSystemParticipantImpl::getReceivedCondition()
+pthread_cond_t* EventSystemClient::getReceivedCondition()
 {
 	return &this->messageReceived;
 }
 
-void EventSystemParticipantImpl::send(Telegram::Telegram* telegram)
+void EventSystemClient::send(Telegram* telegram)
 {
 	memset(this->sendMemory, 0, 4096);
 	int bytes = telegram->serialize(this->sendMemory);
     this->socket.send(this->sendMemory, bytes);
 }
 
-void EventSystemParticipantImpl::log(Telegram::Telegram_Object* log)
+void EventSystemClient::log(Telegram_Object* log)
 {
 	this->send(log);
 }
 
-int EventSystemParticipantImpl::receive(void* data, bool nonblocking)
+int EventSystemClient::receive(void* data, bool nonblocking)
 {
     if (this->newMessage)
     {
@@ -200,3 +202,5 @@ int EventSystemParticipantImpl::receive(void* data, bool nonblocking)
     }
 
 }
+
+} /* namespace EventSystem */

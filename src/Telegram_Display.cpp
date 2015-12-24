@@ -60,11 +60,3 @@ int Telegram_Display::deserialize(void const * const data)
 	return this->getSerializedSize();
 }
 
-void initTelegram_Display(telegram_display* telegram, DisplayPosition* pos, std::string dispstr)
-{
-	initTelegram(&telegram->header, new std::string("DISPLAY"));
-	telegram->header.telegramSize = sizeof(telegram_display);
-	memcpy(telegram->displayString, dispstr.c_str(), dispstr.size());
-	telegram->xpos = pos->getXPosition();
-	telegram->ypos = pos->getYPosition();
-}

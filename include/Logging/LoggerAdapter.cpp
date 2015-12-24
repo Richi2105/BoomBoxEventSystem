@@ -11,6 +11,9 @@
 #include "../Telegram/TelegramObject.h"
 #include <stdio.h>
 
+namespace EventSystem
+{
+
 LoggerAdapter::LoggerAdapter() {
 	// TODO Auto-generated constructor stub
 
@@ -42,12 +45,13 @@ void LoggerAdapter::log(LoggerAdapter::level_t level, std::string message)
 	}
 	else
 	{
-		EventSystem::Log* log = new EventSystem::Log(LoggerAdapter::espi, message, level);
-		Telegram::Telegram_Object* objTelegram = new Telegram::Telegram_Object("LOGGER", log);
-		objTelegram->setType(Telegram::Telegram::LOG);
-		//Telegram::Telegram* telegram = new Telegram_Log(LoggerAdapter::espi, message, level);
+		Log* log = new Log(LoggerAdapter::espi, message, level);
+		Telegram_Object* objTelegram = new Telegram_Object("LOGGER", log);
+		objTelegram->setType(Telegram::LOG);
 		espi->log(objTelegram);
 	}
 }
+
+} /* namespace EventSystem */
 
 

@@ -10,7 +10,7 @@
 
 #include "Telegram.h"
 
-namespace Telegram
+namespace EventSystem
 {
 
 class Telegram_Object: public Telegram {
@@ -25,11 +25,12 @@ public:
 	virtual int deserialize(void const * const data, Serializeable* obj);
 
 	Serializeable* getObject();
+	void setObject(Serializeable* obj);
 
 private:
 	Serializeable* object;
 };
 
-} /* namespace Telegram */
+} /* namespace EventSystem */
 
 #endif /* INCLUDE_TELEGRAM_TELEGRAMOBJECT_H_ */

@@ -7,7 +7,7 @@
 
 #include "TelegramObject.h"
 
-namespace Telegram
+namespace EventSystem
 {
 
 Telegram_Object::Telegram_Object(std::string destination, Serializeable* obj) : Telegram(destination)
@@ -27,6 +27,11 @@ Telegram_Object::~Telegram_Object() {
 Serializeable* Telegram_Object::getObject()
 {
 	return this->object;
+}
+
+void Telegram_Object::setObject(Serializeable* obj)
+{
+	this->object = obj;
 }
 
 int16_t Telegram_Object::getSerializedSize()
@@ -59,5 +64,5 @@ int Telegram_Object::deserialize(void const * const data, Serializeable* obj)
 	return this->getSerializedSize();
 }
 
-} /* namespace Telegram */
+} /* namespace EventSystem */
 

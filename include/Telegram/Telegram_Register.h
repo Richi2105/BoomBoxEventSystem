@@ -12,7 +12,7 @@
 #include "Telegram.h"
 
 
-class Telegram_Register : public Telegram::Telegram
+class Telegram_Register : public EventSystem::Telegram
 {
     public:
         Telegram_Register(SocketAddressLocal clientAddress, std::string id);
@@ -31,15 +31,5 @@ class Telegram_Register : public Telegram::Telegram
         SocketAddressLocal clientAddress;
 
 };
-
-struct _telegram_register_local{
-	telegram_head header;
-	int8_t clientID[ID_SIZE];
-	socketAddress_local address;
-};
-
-typedef struct _telegram_register_local telegram_register_local;
-
-void initTelegram_Register_Local(telegram_register_local* telegram, socketAddress_local* address, std::string* clientID);
 
 #endif // TELEGRAM_REGISTER_H

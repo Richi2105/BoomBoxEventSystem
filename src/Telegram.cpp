@@ -3,7 +3,7 @@
 #include <OS_DEF.h>
 #include "../include/Telegram/Telegram.h"
 
-namespace Telegram
+namespace EventSystem
 {
 
 Telegram::Telegram(std::string identifier)
@@ -75,10 +75,5 @@ int Telegram::deserialize(void const * const data)
 	return Telegram::getSerializedSize();
 }
 
-} /* namespace Telegram */
+} /* namespace EventSystem */
 
-void initTelegram(telegram_head* telegram, std::string* id)
-{
-	memcpy(telegram->destinationID, id->c_str(), ID_SIZE < id->size() ? ID_SIZE : id->size());
-	telegram->telegramSize = sizeof(struct _telegram);
-}
