@@ -1,8 +1,10 @@
 #include <pthread.h>
 #include <unistd.h>
+#include <malloc.h>
+
+#include "../include/constants.h"
 
 #include "../include/Telegram/Telegram.h"
-#include "../include/Telegram/Telegram_Log.h"
 
 #include "../include/Telegram/TelegramObject.h"
 #include "../include/Register/RegisterNetwork.h"
@@ -23,15 +25,19 @@ void* checkForMessageD(void* eventSystemPart)
     while (true)
     {
         memset(data, 0, 4096);
-        int bytes = evp->getSocket()->receive(data, 4096);
+        int bytes = evp->getSocket()->receive(data, DATASIZE);
 
         printf("Anonymous Telegram with size %d\n", bytes);
 
         pthread_mutex_lock(evp->getMemoryMutex());
         memcpy(espData, data, bytes);
         evp->setMessageReceived(true);
+        evp->setReceivedBytes(bytes);
         pthread_cond_signal(evp->getReceivedCondition());
+        pthread_cond_wait(evp->getFetchedCondition(), evp->getMemoryMutex());
         pthread_mutex_unlock(evp->getMemoryMutex());
+
+
         //TODO: wait for message fetch / discard
     }
     return ((void*) 0);
@@ -55,26 +61,25 @@ void EventSystemClient::init(std::string id)
 	this->messageMemory = malloc(4096);
 	this->sendMemory = malloc(4096);
 	this->newMessage = false;
-	int error;
+	this->receivedBytes = 0;
 
 	LoggerAdapter::initLoggerAdapter(this);
 
 	pthread_mutex_init(&this->memoryMutex, NULL);
 	pthread_cond_init(&this->messageReceived, NULL);
+	pthread_cond_init(&this->messageFetched, NULL);
 
-	error = pthread_create(&(this->connectThreadID), NULL, checkForMessageD, this);
-	printf("Error: %d\n", error);
-	if (error < 0)
-	{
-		exit (-1);
-	}
-	else
-	{
-		printf("Event System Participant successful created\n");
-	}
+	printf("Event System Participant successful created\n");
 }
 
 EventSystemClient::~EventSystemClient()
+{
+	this->disconnect();
+	pthread_mutex_destroy(&this->memoryMutex);
+    pthread_cond_destroy(&this->messageReceived);
+}
+
+void EventSystemClient::disconnect()
 {
 	Serializeable* unreg;
 	if (this->socket.isLocal())
@@ -88,10 +93,47 @@ EventSystemClient::~EventSystemClient()
 	Telegram_Object* regTelegram = new Telegram_Object("MASTER", unreg);
 	regTelegram->setType(Telegram::UNREGISTER);
 	this->send(regTelegram);
-
-    pthread_mutex_destroy(&this->memoryMutex);
-    pthread_cond_destroy(&this->messageReceived);
 }
+
+void EventSystemClient::startReceiving()
+{
+	int error = pthread_create(&(this->connectThreadID), NULL, checkForMessageD, this);
+	if (error != 0)
+	{
+		fprintf(stderr, "Severe: could not start receive thread: %d\n", error);
+	}
+	else
+	{
+		printf("receive thread successful started\n");
+	}
+}
+
+void EventSystemClient::stopReceiving()
+{
+	int error = pthread_cancel(this->connectThreadID);
+	if (error != 0)
+	{
+		fprintf(stderr, "Severe: could not send cancel to receive thread: %d\n", error);
+	}
+	else
+	{
+		printf("receive thread successful signaled to cancel\n");
+	}
+
+	error = pthread_join(this->connectThreadID, NULL);
+	if (error != 0)
+	{
+		fprintf(stderr, "Severe: could not join receive thread: %d\n", error);
+	}
+	else
+	{
+		printf("receive thread successful joined\n");
+	}
+
+	this->disconnect();
+}
+
+
 int EventSystemClient::connectToMaster()
 {
 	if (this->socket.isLocal())
@@ -149,6 +191,16 @@ void EventSystemClient::setMessageReceived(bool newMessage)
     this->newMessage = newMessage;
 }
 
+void EventSystemClient::setReceivedBytes(unsigned int numOfBytes)
+{
+	this->receivedBytes = numOfBytes;
+}
+
+unsigned int EventSystemClient::getReceivedBytes()
+{
+	return this->receivedBytes;
+}
+
 pthread_mutex_t* EventSystemClient::getMemoryMutex()
 {
 	return &this->memoryMutex;
@@ -157,6 +209,11 @@ pthread_mutex_t* EventSystemClient::getMemoryMutex()
 pthread_cond_t* EventSystemClient::getReceivedCondition()
 {
 	return &this->messageReceived;
+}
+
+pthread_cond_t* EventSystemClient::getFetchedCondition()
+{
+	return &this->messageFetched;
 }
 
 void EventSystemClient::send(Telegram* telegram)
@@ -171,36 +228,49 @@ void EventSystemClient::log(Telegram_Object* log)
 	this->send(log);
 }
 
+inline int copyReceiveMem(EventSystemClient* evp, void* data)
+{
+	int retVal;
+	if (evp->getReceivedBytes() > malloc_usable_size(data))
+	{
+		fprintf(stderr, "Function receive: not enough space allocated, %d Bytes needed", evp->getReceivedBytes());
+		retVal = -1;
+	}
+	else
+	{
+		memcpy(data, evp->getMessageMemory(), evp->getReceivedBytes());
+		retVal = evp->getReceivedBytes();
+	}
+	evp->setMessageReceived(false);
+	pthread_cond_signal(evp->getFetchedCondition());
+
+	return retVal;
+}
+
 int EventSystemClient::receive(void* data, bool nonblocking)
 {
+	int retVal;
     if (this->newMessage)
     {
-		pthread_mutex_lock(&this->memoryMutex);
-		memcpy(data, this->messageMemory, 4096);
-		this->newMessage = false;
-		pthread_mutex_unlock(&this->memoryMutex);
-
-		return 1;
-
+    	pthread_mutex_lock(this->getMemoryMutex());
+		retVal = copyReceiveMem(this, data);
+		pthread_mutex_unlock(this->getMemoryMutex());
     }
     else
     {
     	if (nonblocking)
     	{
-    		return 0;
+    		retVal = 0;
     	}
     	else
     	{
-			pthread_mutex_lock(&this->memoryMutex);
-			pthread_cond_wait(&this->messageReceived, &this->memoryMutex);
-			memcpy(data, this->messageMemory, 4096);
-			this->newMessage = false;
-			pthread_mutex_unlock(&this->memoryMutex);
-
-			return 1;
+    		pthread_mutex_lock(this->getMemoryMutex());
+    		pthread_cond_wait(this->getReceivedCondition(), this->getMemoryMutex());
+			retVal = copyReceiveMem(this, data);
+			pthread_mutex_unlock(this->getMemoryMutex());
     	}
     }
-
+    return retVal;
 }
 
 } /* namespace EventSystem */

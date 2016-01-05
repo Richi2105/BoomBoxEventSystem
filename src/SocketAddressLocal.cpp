@@ -81,9 +81,11 @@ bool SocketAddressLocal::operator==(SocketAddressLocal* address)
 	return this->isEqual(address);
 }
 
-int16_t SocketAddressLocal::getSerializedSize()
+int SocketAddressLocal::getSerializedSize()
 {
+#ifdef DEBUG_OUT
 	printf("in SocketAddressLocal::getSerializedSize()\n");
+#endif //DEBUG_OUT
 	int16_t size = 0;
 	size += sizeof(this->address);
 	size += sizeof(this->addressSize);
@@ -97,8 +99,9 @@ int SocketAddressLocal::serialize(void* const data)
 {
 	//void* data = malloc(this->getSerializedSize());
 	MEMUNIT* data2 = (MEMUNIT*)data;
+	#ifdef DEBUG_OUT
 	printf("in SocketAddressLocal::serialize(void* const data)\n");
-		//packData(data2, this->address);
+	#endif //DEBUG_OUT
 	packData(data2, this->address.sun_family);
 	packNData(data2, this->address.sun_path, 108);
 	packData(data2, this->len);
@@ -111,13 +114,17 @@ int SocketAddressLocal::serialize(void* const data)
 int SocketAddressLocal::deserialize(void const * const data)
 {
 	const MEMUNIT* data2 = (MEMUNIT*)data;
+	#ifdef DEBUG_OUT
 	printf("in SocketAddressLocal::deserialize(void const * const data)\n");
+	#endif //DEBUG_OUT
 	unpackData(data2, this->address.sun_family);
 	unpackNData(data2, this->address.sun_path, 108);
 	unpackData(data2, this->len);
 	unpackData(data2, this->addressSize);
 
+	#ifdef DEBUG_OUT
 	printf("Offset data2 %p to data %p\n", data2, data);
+	#endif //DEBUG_OUT
 
 	return SocketAddressLocal::getSerializedSize();
 }

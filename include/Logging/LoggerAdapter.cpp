@@ -6,7 +6,6 @@
  */
 
 #include "LoggerAdapter.h"
-#include "../Telegram/Telegram_Log.h"
 #include "Log.h"
 #include "../Telegram/TelegramObject.h"
 #include <stdio.h>
@@ -24,17 +23,21 @@ LoggerAdapter::~LoggerAdapter() {
 }
 
 EventSystemParticipant* LoggerAdapter::espi = nullptr;
+Log LoggerAdapter::logObject;
+Telegram_Object LoggerAdapter::logTelegram(Telegram::ID_LOGGER, &LoggerAdapter::logObject);
 
 void LoggerAdapter::initLoggerAdapter(EventSystemParticipant* espi)
 {
 	LoggerAdapter::espi = espi;
+	LoggerAdapter::logObject.setSource(espi);
+	LoggerAdapter::logTelegram.setType(Telegram::LOG);
 }
 
-void LoggerAdapter::log(LoggerAdapter::level_t level, std::string message)
+void LoggerAdapter::log(Log::level_t level, std::string message)
 {
 	if (LoggerAdapter::espi == nullptr)
 	{
-		if (level == LoggerAdapter::SEVERE)
+		if (level == Log::SEVERE)
 		{
 			fprintf(stderr, "Severe:\nMessage: %s\n", message.c_str());
 		}
@@ -45,10 +48,8 @@ void LoggerAdapter::log(LoggerAdapter::level_t level, std::string message)
 	}
 	else
 	{
-		Log* log = new Log(LoggerAdapter::espi, message, level);
-		Telegram_Object* objTelegram = new Telegram_Object("LOGGER", log);
-		objTelegram->setType(Telegram::LOG);
-		espi->log(objTelegram);
+		LoggerAdapter::logObject.setLog(message, level);
+		espi->log(&LoggerAdapter::logTelegram);
 	}
 }
 

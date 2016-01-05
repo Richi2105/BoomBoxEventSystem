@@ -24,6 +24,11 @@
 #define LOG_MESSAGE_SIZE 250
 
 /**
+ * max characters Key Description
+ */
+#define KEYDESCRIPTION_SIZE 20
+
+/**
  * maximum telegram size, default data allocation size
  */
 #define DATASIZE 4096

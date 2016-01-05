@@ -5,6 +5,7 @@
 #include <string>
 #include <string.h>
 #include <stdint.h>
+#include <OS_DEF.h>
 #include "../constants.h"
 #include "../Serializeable.h"
 
@@ -18,11 +19,20 @@ class Telegram : public Serializeable
 
         Telegram(std::string identifier);
         virtual ~Telegram();
+
+        static std::string ID_LOGGER;
+        static std::string ID_MASTER;
+        static std::string ID_DISPLAY;
+        static std::string ID_DISPLAYCLIENT;
+        static std::string ID_AUDIOPLAYER;
+        static std::string ID_INPUT;
+
+        void setIdentifier(std::string identifier);
+
         char* getDestinationID();
         int getSize();
 
-
-        virtual int16_t getSerializedSize();
+        virtual int getSerializedSize();
     	virtual int serialize(void* const data);
     	virtual int deserialize(void const * const data);
 
@@ -32,7 +42,7 @@ class Telegram : public Serializeable
     protected:
 		char destinationID[ID_SIZE];
 		telegram_type type;
-        int telegramSize;
+        int32 telegramSize;
 };
 
 } /* namespace EventSystem */

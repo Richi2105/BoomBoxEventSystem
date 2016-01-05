@@ -20,7 +20,7 @@ public:
     virtual SocketAddress* getClientAddress() = 0;
     virtual char* getClientID() = 0;
 
-    virtual int16_t getSerializedSize() = 0;
+    virtual int getSerializedSize() = 0;
 	virtual int serialize(void* const data) = 0;
 	virtual int deserialize(void const * const data) = 0;
 };

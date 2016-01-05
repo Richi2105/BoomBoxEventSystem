@@ -10,32 +10,34 @@
 
 #include <string>
 #include <time.h>
-#include "LoggerAdapter.h"
+#include <OS_DEF.h>
 #include "../Serializeable.h"
 #include "../Telegram/Telegram.h"
 #include "../EventSystemParticipant.h"
 
-#define LOG_MESSAGE_SIZE 250
-#define UNIQUEID_SIZE 30
 
 namespace EventSystem {
 
 class Log : public Serializeable
 {
 public:
-	Log(EventSystemParticipant* source, std::string log, LoggerAdapter::level_t level);
+	enum level_t {INFO, WARNING, SEVERE};
+
+	Log(EventSystemParticipant* source, std::string log, Log::level_t level);
 	Log();
 	virtual ~Log();
 
 	char* getLog();
-	void setLog(std::string log, LoggerAdapter::level_t level);
+	void setLog(std::string log, Log::level_t level);
+
+	void setSource(EventSystemParticipant* source);
 
 	time_t getTime();
 	char* getSourceID();
 	char* getUniqueSourceID();
-	LoggerAdapter::level_t getLevel();
+	Log::level_t getLevel();
 
-	virtual int16_t getSerializedSize();
+	virtual int getSerializedSize();
 	virtual int serialize(void* const data);
 	virtual int deserialize(void const * const data);
 
@@ -43,8 +45,8 @@ private:
     char log[LOG_MESSAGE_SIZE];
     char sourceID[ID_SIZE];
     char uniqueSourceID[UNIQUEID_SIZE];
-    LoggerAdapter::level_t level;
-    time_t logtime;
+    Log::level_t level;
+    int64 logtime;
 };
 
 } /* namespace EventSystem */

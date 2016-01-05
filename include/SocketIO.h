@@ -17,7 +17,7 @@ public:
 	virtual int send(void* data, int numOfBytes) = 0;
 	virtual int receive(void* data, int numOfBytes) = 0;
 	virtual std::string getUniqueID() = 0;
-	virtual struct SocketAddress* getAddress() = 0;
+	virtual SocketAddress* getAddress() = 0;
 	virtual int getSocketFileDescriptor() = 0;
 };
 

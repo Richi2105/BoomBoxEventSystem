@@ -26,7 +26,7 @@ SocketIO_Local::SocketIO_Local() : myAddress()
     socklen = 64;
     memset(&mySockAddress, 0, sizeof(struct sockaddr_un));
     mySockAddress.sun_family = AF_UNIX;
-    snprintf(mySockAddress.sun_path, sizeof(mySockAddress.sun_path), "/tmp/ipc_%ld", (long) getpid());
+    snprintf(mySockAddress.sun_path, sizeof(mySockAddress.sun_path), "/tmp/ipc_%ld_%d", (long) getpid(), rand());
 
     bind(this->socketFileDescriptor, (struct sockaddr*)&mySockAddress, sizeof(sockaddr_un));
 //    getsockname(this->socketFileDescriptor, (struct sockaddr*)&mySockAddress, &socklen);

@@ -34,8 +34,10 @@ SocketAddressNetwork::~SocketAddressNetwork()
 
 void SocketAddressNetwork::setAddress(sockaddr_in address, socklen_t len)
 {
+	#ifdef DEBUG_OUT
 	printf("setting Address in SocketAddressLocal\n"
 			"Parameter: %x\n", address.sin_addr.s_addr);
+	#endif //DEBUG_OUT
     this->address = address;
     this->len = len;
     this->addressSize = sizeof(int8_t) + sizeof(socklen_t) + sizeof(sockaddr_in);
@@ -79,7 +81,7 @@ bool SocketAddressNetwork::operator==(SocketAddressNetwork* address)
 	return this->isEqual(address);
 }
 
-int16_t SocketAddressNetwork::getSerializedSize()
+int SocketAddressNetwork::getSerializedSize()
 {
 	int16_t size = 0;
 	size += sizeof(this->address.sin_addr.s_addr);
@@ -95,7 +97,9 @@ int SocketAddressNetwork::serialize(void* const data)
 {
 	//void* data = malloc(this->getSerializedSize());
 	MEMUNIT* data2 = (MEMUNIT*)data;
+	#ifdef DEBUG_OUT
 	printf("SocketAddressNetwork::serialize()\n");
+	#endif //DEBUG_OUT
 	packData(data2, this->address.sin_addr.s_addr);
 	packData(data2, this->address.sin_family);
 	packData(data2, this->address.sin_port);
@@ -107,7 +111,9 @@ int SocketAddressNetwork::serialize(void* const data)
 int SocketAddressNetwork::deserialize(void const * const data)
 {
 	const MEMUNIT* data2 = (MEMUNIT*)data;
+	#ifdef DEBUG_OUT
 	printf("SocketAddressNetwork::deserialize()\n");
+	#endif //DEBUG_OUT
 	unpackData(data2, this->address.sin_addr.s_addr);
 	unpackData(data2, this->address.sin_family);
 	unpackData(data2, this->address.sin_port);

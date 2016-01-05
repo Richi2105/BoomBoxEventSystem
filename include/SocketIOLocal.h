@@ -17,12 +17,15 @@ class SocketIO_Local : public SocketIO
 public:
 	/**
 	 * constructs a socket and the belonging address
+	 * the socket's (aka named pipe) path consists of /tmp/ipc_, the process indication number
+	 * and a random value generated via rand(), so a process can have multiple sockets
 	 */
 	SocketIO_Local();
 	virtual ~SocketIO_Local();
 
 	/**
-	 * send stuff
+	 * dummy function, no send is made
+	 * use sendto(getSocketFileDescriptor(), ...) instead
 	 */
 	virtual int send(void* data, int numOfBytes);
 

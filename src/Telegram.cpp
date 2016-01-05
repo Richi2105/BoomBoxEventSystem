@@ -6,10 +6,18 @@
 namespace EventSystem
 {
 
+std::string Telegram::ID_LOGGER = "LOGGER";
+std::string Telegram::ID_MASTER = "MASTER";
+std::string Telegram::ID_DISPLAY = "DISPLAY";
+std::string Telegram::ID_DISPLAYCLIENT = "DISPLAYCLIENT";
+std::string Telegram::ID_AUDIOPLAYER = "AUDIOPLAYER";
+std::string Telegram::ID_INPUT = "INPUT";
+
 Telegram::Telegram(std::string identifier)
 {
 //            this->destinationID = identifier;
-    memcpy(destinationID, identifier.c_str(), identifier.size());
+	memset(destinationID, 0, ID_SIZE);
+    memcpy(destinationID, identifier.c_str(), ID_SIZE < identifier.size() ? ID_SIZE : identifier.size());
 //            telegramSize = sizeof(char) * ID_SIZE + sizeof(int);
     this->type = ANONYMOUS;
     this->telegramSize = sizeof(Telegram);
@@ -21,6 +29,12 @@ Telegram::~Telegram()
 char* Telegram::getDestinationID()
 {
     return this->destinationID;
+}
+
+void Telegram::setIdentifier(std::string identifier)
+{
+	memset(destinationID, 0, ID_SIZE);
+    memcpy(destinationID, identifier.c_str(), ID_SIZE < identifier.size() ? ID_SIZE : identifier.size());
 }
 
 //@DEPRECATED
@@ -39,9 +53,11 @@ void Telegram::setType(Telegram::telegram_type type)
 	this->type = type;
 }
 
-int16_t Telegram::getSerializedSize()
+int Telegram::getSerializedSize()
 {
+	#ifdef DEBUG_OUT
 	printf("Telegram::getSerializedSize()\n");
+	#endif //DEBUG_OUT
 	int16_t size = 0;
 	size += sizeof(this->destinationID[0])*ID_SIZE;
 	size += sizeof(this->type);
@@ -52,25 +68,33 @@ int16_t Telegram::getSerializedSize()
 int Telegram::serialize(void* const data)
 {
 	//void* data = malloc(this->getSerializedSize());
+	#ifdef DEBUG_OUT
 	printf("in Telegram::serialize(void* const data)\n");
+	#endif //DEBUG_OUT
 	MEMUNIT* data2 = (MEMUNIT*)data;
 	packNData(data2, this->destinationID, ID_SIZE);
 	packData(data2, this->type);
 	packData(data2, this->telegramSize);
 
+	#ifdef DEBUG_OUT
 	printf("Offset data2 %p to data %p\n", data2, data);
+	#endif //DEBUG_OUT
 
 	return Telegram::getSerializedSize();
 }
 int Telegram::deserialize(void const * const data)
 {
 	const MEMUNIT* data2 = (MEMUNIT*)data;
+	#ifdef DEBUG_OUT
 	printf("in Telegram::deserialize(void const * const data)\n");
+	#endif //DEBUG_OUT
 	unpackNData(data2, this->destinationID, ID_SIZE);
 	unpackData(data2, this->type);
 	unpackData(data2, this->telegramSize);
 
+	#ifdef DEBUG_OUT
 	printf("Offset data2 %p to data %p\n", data2, data);
+	#endif //DEBUG_OUT
 
 	return Telegram::getSerializedSize();
 }

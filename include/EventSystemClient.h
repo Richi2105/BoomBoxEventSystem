@@ -45,6 +45,19 @@ class EventSystemClient : public EventSystemParticipant
          */
         int connectToMaster(sockaddr_in address);
 
+        /**
+         * starts the receiving thread
+         * must be called to receive anything!
+         */
+        void startReceiving();
+
+        /**
+         * stops the receiving thread
+         * also unregisters from master
+         * call startReceiving() & connectToMaster() to revert the process
+         */
+        void stopReceiving();
+
         std::string getIdentifier();
         std::string getUniqueIdentifier();
 
@@ -61,19 +74,27 @@ class EventSystemClient : public EventSystemParticipant
          * receive data
          * @param data: received data written to
          * @param nonblocking: specify if this returns immediately or block till data has arrived
-         * @return 0 if no data was available, 1 if data was available
+         * @return 0 if no data was available, -1 on error, number of received bytes on success
          */
         int receive(void* data, bool nonblocking);
+
         void setMessageReceived(bool newMessage);
+        void setReceivedBytes(unsigned int numOfBytes);
+        unsigned int getReceivedBytes();
 
         pthread_mutex_t* getMemoryMutex();
         pthread_cond_t* getReceivedCondition();
+        pthread_cond_t* getFetchedCondition();
     protected:
     private:
         void init(std::string id);
+        void disconnect();
+
+        unsigned int receivedBytes;
 
         pthread_mutex_t memoryMutex;
         pthread_cond_t messageReceived;
+        pthread_cond_t messageFetched;
 
         std::string id;
         Socket_Slave socket;

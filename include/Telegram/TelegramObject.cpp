@@ -34,9 +34,11 @@ void Telegram_Object::setObject(Serializeable* obj)
 	this->object = obj;
 }
 
-int16_t Telegram_Object::getSerializedSize()
+int Telegram_Object::getSerializedSize()
 {
+	#ifdef DEBUG_OUT
 	printf("Telegram_Object::getSerializedSize()\n");
+	#endif //DEBUG_OUT
 	int16_t size = 0;
 	size += Telegram::getSerializedSize();
 	size += this->object->getSerializedSize();
@@ -45,7 +47,9 @@ int16_t Telegram_Object::getSerializedSize()
 }
 int Telegram_Object::serialize(void* const data)
 {
+	#ifdef DEBUG_OUT
 	printf("Telegram_Object::serialize(void* const data)\n");
+	#endif //DEBUG_OUT
 	//void* data = malloc(this->getSerializedSize());
 	MEMUNIT* data2 = (MEMUNIT*)data;
 	data2 += Telegram::serialize(data2);
@@ -55,7 +59,9 @@ int Telegram_Object::serialize(void* const data)
 }
 int Telegram_Object::deserialize(void const * const data, Serializeable* obj)
 {
+	#ifdef DEBUG_OUT
 	printf("Telegram_Object::deserialize(void const * const data)\n");
+	#endif //DEBUG_OUT
 	const MEMUNIT* data2 = (MEMUNIT*)data;
 	data2 += Telegram::deserialize(data2);
 	data2 += obj->deserialize(data2);

@@ -9,9 +9,6 @@
 
 #include "../include/SocketAddress.h"
 #include "../include/Telegram/Telegram.h"
-#include "../include/Telegram/Telegram_Log.h"
-#include "../include/Telegram/Telegram_Register.h"
-#include "../include/Telegram/Telegram_Register_Extern.h"
 
 #include "../include/Logging/LoggerAdapter.h"
 #include "../include/Logging/Log.h"
@@ -55,8 +52,10 @@ void* checkForMessage(void* arg)
     void* data = ((threadArgument*)arg)->dataPointer;
     int bytes;
 
-    printf("checkForMessage(): %s thread starting\n", local ? "local" : "network");
-    printf("\tdata information:\n\tbool local: %p\n\tvoid* data: %p\n\tint bytes: %p\n", &local, &data, &bytes);
+//    printf("bool: %d\n", ((threadArgument*)arg)->local);
+
+//    printf("checkForMessage(): %s thread starting\n", ((threadArgument*)arg)->local ? "local" : "network");
+//    printf("\tdata information:\n\tbool local: %p\n\tvoid* data: %p\n\tint bytes: %p\n", &((threadArgument*)arg)->local, ((threadArgument*)arg)->dataPointer, &bytes);
 
     SocketIO* socket;
     if (local)
@@ -76,8 +75,8 @@ void* checkForMessage(void* arg)
         bytes = socket->receive(data, DATASIZE);
         telegram.deserialize(data);
 
-#ifdef DEBUG
-        unsigned char* data1 = (unsigned char*) data;
+#ifdef DEBUG_OUT
+        unsigned char* data1 = (unsigned char*) ((threadArgument*)arg)->dataPointer;
 		printf("Contents of Telegram:\n");
 		for (int i=0; i<bytes; i+=1)
 		{
@@ -89,9 +88,9 @@ void* checkForMessage(void* arg)
 
 		}
 		printf("\n");
-#endif //DEBUG
+#endif //DEBUG_OUT
 
-		if (stringCompare(telegram.getDestinationID(), id_master))
+		if (stringCompare(telegram.getDestinationID(), Telegram::ID_MASTER.c_str()))
 		{
 			Telegram_Object* regTelegram = new Telegram_Object();
 			std::string s;
@@ -103,14 +102,13 @@ void* checkForMessage(void* arg)
 				if (regTelegram->getType() == Telegram::Telegram::REGISTER)
 				{
 					evm->addClient(s, reg->getClientAddress());
-					LoggerAdapter::log(LoggerAdapter::INFO, "Client " + s + " registered");
+					LoggerAdapter::log(Log::INFO, "Client " + s + " registered");
 				}
 				else if (regTelegram->getType() == Telegram::Telegram::UNREGISTER)
 				{
 					evm->removeClient(s, reg->getClientAddress());
-					LoggerAdapter::log(LoggerAdapter::INFO, "Client " + s + " unregistered");
+					LoggerAdapter::log(Log::INFO, "Client " + s + " unregistered");
 				}
-
 			}
 			else
 			{
@@ -120,19 +118,19 @@ void* checkForMessage(void* arg)
 				if (regTelegram->getType() == Telegram::Telegram::REGISTER)
 				{
 					evm->addClient(s, reg->getClientAddress());
-					LoggerAdapter::log(LoggerAdapter::INFO, "Client " + s + " registered");
+					LoggerAdapter::log(Log::INFO, "Client " + s + " registered");
 				}
 				else if (regTelegram->getType() == Telegram::Telegram::UNREGISTER)
 				{
 					evm->removeClient(s, reg->getClientAddress());
-					LoggerAdapter::log(LoggerAdapter::INFO, "Client " + s + " unregistered");
+					LoggerAdapter::log(Log::INFO, "Client " + s + " unregistered");
 				}
-
 			}
 
 		}
 		else
 		{
+			printf("Sending to %s\n", telegram.getDestinationID());
 			evm->sendToClient(telegram.getDestinationID(), data, bytes);
 		}
 
@@ -162,38 +160,42 @@ void EventSystemMaster::init()
     pthread_t connectThreadID;
     pthread_t connectThreadNetworkID;
 
-    struct threadArgument arg_local, arg_network;
-
-    arg_local.local = true;
-    arg_local.masterPointer = this;
-    arg_local.dataPointer = malloc(DATASIZE);
-
-    arg_network.local = false;
-    arg_network.masterPointer = this;
-    arg_network.dataPointer = malloc(DATASIZE);
-
     this->dataPointer = malloc(512);
 
     LoggerAdapter::initLoggerAdapter(this);
 
-    error = pthread_create(&connectThreadID, NULL, checkForMessage, &arg_local);
+    struct threadArgument* arg_local = (threadArgument*) malloc(sizeof(threadArgument));
+
+    arg_local->local = true;
+    arg_local->masterPointer = this;
+    arg_local->dataPointer = malloc(DATASIZE);
+
+    error = pthread_create(&connectThreadID, NULL, checkForMessage, arg_local);
+
     if (error < 0)
 	{
 		exit (-1);
 	}
     printf("EventSystemMaster(): Local message thread started\n");
-    sleep(2);
-    error = pthread_create(&connectThreadNetworkID, NULL, checkForMessage, &arg_network);
-    printf("Error: %d\n", error);
+
+    struct threadArgument* arg_network = (threadArgument*) malloc(sizeof(threadArgument));
+
+    arg_network->local = false;
+    arg_network->masterPointer = this;
+    arg_network->dataPointer = malloc(DATASIZE);
+
+    error = pthread_create(&connectThreadNetworkID, NULL, checkForMessage, arg_network);
+
     if (error < 0)
     {
         exit (-1);
     }
-    else
-    {
-    	printf("EventSystemMaster(): Network message thread started\n");
-    	printf("EventSystemMaster(): Event System Master successful created\n");
-    }
+
+	printf("EventSystemMaster(): Network message thread started\n");
+
+    //sleep(1);
+	printf("EventSystemMaster(): Event System Master successful created\n");
+
 }
 
 EventSystemMaster::~EventSystemMaster()
@@ -275,7 +277,7 @@ void EventSystemMaster::removeClient(std::string id, SocketAddressLocal* remAddr
 	LocalClientMap::const_iterator result = this->localClients.find(id);
     if (result == this->localClients.end())
     {
-    	LoggerAdapter::log(LoggerAdapter::WARNING, "client " + id + " tried to unregister, but is not registered\n");
+    	LoggerAdapter::log(Log::WARNING, "client " + id + " tried to unregister, but is not registered\n");
     }
     else
     {
@@ -291,7 +293,7 @@ void EventSystemMaster::removeClient(std::string id, SocketAddressLocal* remAddr
 		}
     	if (i >= this->localClients.at(id).size())
     	{
-    		LoggerAdapter::log(LoggerAdapter::WARNING, "client " + id + " tried to unregister, but is not registered\n");
+    		LoggerAdapter::log(Log::WARNING, "client " + id + " tried to unregister, but is not registered\n");
     	}
     }
 }
@@ -301,7 +303,7 @@ void EventSystemMaster::removeClient(std::string id, SocketAddressNetwork* remAd
 	NetworkClientMap::const_iterator result = this->networkClients.find(id);
     if (result == this->networkClients.end())
     {
-    	LoggerAdapter::log(LoggerAdapter::WARNING, "client " + id + " tried to unregister, but is not registered\n");
+    	LoggerAdapter::log(Log::WARNING, "client " + id + " tried to unregister, but is not registered\n");
     }
     else
     {
@@ -317,14 +319,14 @@ void EventSystemMaster::removeClient(std::string id, SocketAddressNetwork* remAd
 		}
     	if (i >= this->networkClients.at(id).size())
     	{
-    		LoggerAdapter::log(LoggerAdapter::WARNING, "client " + id + " tried to unregister, but is not registered\n");
+    		LoggerAdapter::log(Log::WARNING, "client " + id + " tried to unregister, but is not registered\n");
     	}
     }
 }
 
 void EventSystemMaster::sendToClient(std::string destination, void* data, int numOfBytes)
 {
-	if (stringCompare(destination.c_str(), id_logger) && !this->loggerConnected)
+	if (stringCompare(destination.c_str(), Telegram::ID_LOGGER.c_str()) && !this->loggerConnected)
 	{
 		Telegram_Object* logTelegram = new Telegram_Object();
 		Log* logMessage = new Log();
@@ -361,7 +363,7 @@ void EventSystemMaster::sendToClient(std::string destination, void* data, int nu
 
 		if (noClient >= 2)
 		{
-			LoggerAdapter::log(LoggerAdapter::WARNING, "no client " + destination + " connected yet");
+			LoggerAdapter::log(Log::WARNING, "no client " + destination + " connected yet");
 		}
 	}
 

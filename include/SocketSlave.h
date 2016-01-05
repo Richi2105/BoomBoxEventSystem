@@ -11,6 +11,7 @@
 
 /**
  * this class represents a socket to communicate locally or per network
+ * It has a SocketIO variable which is either a SocketIOLocal or SocketIONetwork type
  */
 class Socket_Slave
 {
@@ -56,6 +57,14 @@ public:
 	 * @param numOfBytes: the number of data to be sent
 	 */
 	int send(void* data, int numOfBytes);
+
+	/**
+	 * receives data
+	 * @param data: the data written to
+	 * @param numOfBytes: the maximum number of data to be received
+	 * @return the actual bytes received
+	 */
+	int receive(void* data, int numOfBytes);
 
 	/**
 	 * @return: a unique string consisting of the Process Identification Number of this process.

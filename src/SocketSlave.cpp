@@ -10,8 +10,6 @@
 #include <stdlib.h>
 
 #include "../include/Telegram/Telegram.h"
-#include "../include/Telegram/Telegram_Register.h"
-#include "../include/Telegram/Telegram_Register_Extern.h"
 
 #include "../include/Register/RegisterLocal.h"
 #include "../include/Telegram/TelegramObject.h"
@@ -48,7 +46,7 @@ Socket_Slave::~Socket_Slave()
 int Socket_Slave::send(void* data, int numOfBytes)
 {
 	unsigned char* data1 = (unsigned char*) data;
-#ifdef DEBUG
+#ifdef DEBUG_OUT
 	printf("Contents of Telegram\n");
 	for (int i=0; i<numOfBytes; i+=1)
 	{
@@ -59,8 +57,18 @@ int Socket_Slave::send(void* data, int numOfBytes)
 		}
 
 	}
-#endif //DEBUG
+#endif //DEBUG_OUT
     return sendto(this->socket->getSocketFileDescriptor(), data, numOfBytes, 0, this->masterAddress->getAddress(), this->masterAddress->getLen());
+}
+
+int Socket_Slave::receive(void* data, int numOfBytes)
+{
+	return this->socket->receive(data, numOfBytes);
+}
+
+std::string Socket_Slave::getUniqueID()
+{
+	return this->socket->getUniqueID();
 }
 
 void Socket_Slave::setAddress(struct sockaddr_in address, socklen_t len)

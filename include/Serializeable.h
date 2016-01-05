@@ -28,7 +28,7 @@
 class Serializeable
 {
 public:
-	virtual int16_t getSerializedSize() = 0;
+	virtual int getSerializedSize() = 0;
 	virtual int serialize(void* const data) = 0;
 	virtual int deserialize(void const * const data) = 0;
 	virtual ~Serializeable() {};

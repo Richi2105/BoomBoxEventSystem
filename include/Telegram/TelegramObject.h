@@ -19,7 +19,7 @@ public:
 	Telegram_Object();
 	virtual ~Telegram_Object();
 
-    virtual int16_t getSerializedSize();
+    virtual int getSerializedSize();
 	virtual int serialize(void* const data);
 	//@Override
 	virtual int deserialize(void const * const data, Serializeable* obj);

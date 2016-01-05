@@ -31,7 +31,7 @@ public:
 
 	bool operator==(SocketAddressNetwork* address);
 
-	virtual int16_t getSerializedSize();
+	virtual int getSerializedSize();
 	virtual int serialize(void* const data);
 	virtual int deserialize(void const * const data);
 

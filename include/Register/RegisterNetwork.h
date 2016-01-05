@@ -25,7 +25,7 @@ public:
     virtual SocketAddressNetwork* getClientAddress();
     virtual char* getClientID();
 
-    virtual int16_t getSerializedSize();
+    virtual int getSerializedSize();
 	virtual int serialize(void* const data);
 	virtual int deserialize(void const * const data);
 
