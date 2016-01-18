@@ -11,11 +11,14 @@
 #include <sys/un.h>
 #include "SocketAddress.h"
 #include "Serializeable.h"
+#include "constants.h"
+
+#include <string>
 
 class SocketAddressLocal : public SocketAddress, Serializeable
 {
 public:
-	SocketAddressLocal(sockaddr_un address, socklen_t len);
+	SocketAddressLocal(sockaddr_un address, socklen_t len, std::string uid);
 	SocketAddressLocal();
 	virtual ~SocketAddressLocal();
 
@@ -31,6 +34,8 @@ public:
 
 	bool operator==(SocketAddressLocal* address);
 
+	virtual char* getUniqueID();
+
 	virtual int getSerializedSize();
 	virtual int serialize(void* const data);
 	virtual int deserialize(void const * const data);
@@ -39,6 +44,7 @@ private:
 	sockaddr_un address;
 	socklen_t len;
 	uint8_t addressSize;
+	char uniqueID[UNIQUEID_SIZE];
 };
 
 struct _socketAddressLocal{

@@ -10,13 +10,15 @@
 #include <OS_DEF.h>
 #include "../include/SocketAddressLocal.h"
 
-SocketAddressLocal::SocketAddressLocal(sockaddr_un address, socklen_t len)
+SocketAddressLocal::SocketAddressLocal(sockaddr_un address, socklen_t len, std::string uid)
 {
 	printf("Creating SocketAddressLocal(sockaddr_un)\n"
 			"Parameter: %s\n", address.sun_path);
     this->address = address;
     this->len = len;
     this->addressSize = sizeof(int8_t) + sizeof(socklen_t) + sizeof(sockaddr_un);
+    memset(this->uniqueID, 0, UNIQUEID_SIZE);
+    memcpy(this->uniqueID, uid.c_str(), UNIQUEID_SIZE < uid.size() ? UNIQUEID_SIZE : uid.size());
 }
 
 SocketAddressLocal::SocketAddressLocal()
@@ -25,6 +27,7 @@ SocketAddressLocal::SocketAddressLocal()
 //    memset(&(this->address), 0, sizeof(sockaddr_un));
     this->len = 0;
     this->addressSize = 0;
+    memset(this->uniqueID, 0, UNIQUEID_SIZE);
 }
 
 SocketAddressLocal::~SocketAddressLocal()
@@ -66,6 +69,7 @@ void SocketAddressLocal::convertTo_Struct(void* address)
 bool SocketAddressLocal::isEqual(SocketAddressLocal* address)
 {
 	int result = strcmp(this->address.sun_path, address->address.sun_path);
+	result += strncmp(this->uniqueID, address->uniqueID, UNIQUEID_SIZE);
 	if (result != 0)
 	{
 		return false;
@@ -81,6 +85,11 @@ bool SocketAddressLocal::operator==(SocketAddressLocal* address)
 	return this->isEqual(address);
 }
 
+char* SocketAddressLocal::getUniqueID()
+{
+	return this->uniqueID;
+}
+
 int SocketAddressLocal::getSerializedSize()
 {
 #ifdef DEBUG_OUT
@@ -90,6 +99,7 @@ int SocketAddressLocal::getSerializedSize()
 	size += sizeof(this->address);
 	size += sizeof(this->addressSize);
 	size += sizeof(this->len);
+	size += sizeof(this->uniqueID[0]) * UNIQUEID_SIZE;
 
 	printf("size is %d\n", size);
 
@@ -106,8 +116,11 @@ int SocketAddressLocal::serialize(void* const data)
 	packNData(data2, this->address.sun_path, 108);
 	packData(data2, this->len);
 	packData(data2, this->addressSize);
+	packNData(data2, this->uniqueID, UNIQUEID_SIZE);
 
+	#ifdef DEBUG_OUT
 	printf("Offset data2 %p to data %p\n", data2, data);
+	#endif //DEBUG_OUT
 
 	return SocketAddressLocal::getSerializedSize();
 }
@@ -121,6 +134,7 @@ int SocketAddressLocal::deserialize(void const * const data)
 	unpackNData(data2, this->address.sun_path, 108);
 	unpackData(data2, this->len);
 	unpackData(data2, this->addressSize);
+	unpackNData(data2, this->uniqueID, UNIQUEID_SIZE);
 
 	#ifdef DEBUG_OUT
 	printf("Offset data2 %p to data %p\n", data2, data);

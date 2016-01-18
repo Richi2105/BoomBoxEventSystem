@@ -11,7 +11,7 @@
 #include "../include/SocketIOLocal.h"
 
 
-SocketIO_Local::SocketIO_Local() : myAddress()
+SocketIO_Local::SocketIO_Local()
 {
 	printf("Creating SocketIO_Local\n");
     char uid[25];
@@ -31,22 +31,23 @@ SocketIO_Local::SocketIO_Local() : myAddress()
     bind(this->socketFileDescriptor, (struct sockaddr*)&mySockAddress, sizeof(sockaddr_un));
 //    getsockname(this->socketFileDescriptor, (struct sockaddr*)&mySockAddress, &socklen);
     printf("my Address: %s\n", mySockAddress.sun_path);
-    this->myAddress.setAddress(mySockAddress, socklen);
+    this->myAddress = new SocketAddressLocal(mySockAddress, socklen, this->uniqueID);
 }
 
 SocketIO_Local::~SocketIO_Local()
 {
+	delete this->myAddress;
     close(this->socketFileDescriptor);
 }
 
 std::string SocketIO_Local::getUniqueID()
 {
-    return uniqueID;
+    return this->uniqueID;
 }
 
 SocketAddress* SocketIO_Local::getAddress()
 {
-    return ((SocketAddress*) &this->myAddress);
+    return ((SocketAddress*) this->myAddress);
 }
 
 int SocketIO_Local::getSocketFileDescriptor()

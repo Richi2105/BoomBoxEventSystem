@@ -1,6 +1,8 @@
 #ifndef EVENTSYSTEMMASTER_H
 #define EVENTSYSTEMMASTER_H
 
+#define DEBUG_OUT
+
 #include <string>
 #include <sys/un.h>
 
@@ -57,7 +59,7 @@ public:
 	void removeClient(std::string id, SocketAddressLocal* remAddress);
 	void removeClient(std::string id, SocketAddressNetwork* remAddress);
 
-	void sendToClient(std::string destination, void* data, int numOfBytes);
+	void sendToClient(std::string destination, bool isUniqueID, void* data, int numOfBytes);
 	virtual void log(Telegram_Object* log);
 
 	void setLoggerConnected();

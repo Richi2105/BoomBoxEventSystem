@@ -12,7 +12,7 @@ class SocketAddress
         virtual sockaddr* getAddress() = 0;
         virtual socklen_t getLen() = 0;
         virtual uint8_t getSize() = 0;
-        virtual void convertTo_Struct(void* address) = 0;
+        virtual char* getUniqueID() = 0;
 };
 /*
 //typedef class SocketAddress SockAddress;

@@ -24,7 +24,7 @@
 namespace EventSystem
 {
 
-bool stringCompare(const char* str1, const char* str2)
+inline bool stringCompare(const char* str1, const char* str2)
 {
     if (strcmp(str1, str2) == 0)
     {
@@ -34,6 +34,26 @@ bool stringCompare(const char* str1, const char* str2)
     {
         return false;
     }
+}
+
+inline std::string cropID(std::string id)
+{
+	unsigned int pos = id.find_last_of('_') + 1;
+	std::string retVal = id.substr(pos > id.size() ? 0 : pos, ID_SIZE);
+	#ifdef DEBUG_OUT
+	printf("in cropID(%s): retVal = %s\n", id.c_str(), retVal.c_str());
+	#endif //DEBUG_OUT
+	return retVal;
+}
+
+inline std::string cropUID(std::string id)
+{
+	unsigned int pos = id.find_first_of('_');
+	std::string retVal = id.substr(0, pos > id.size() ? 0 : pos);
+	#ifdef DEBUG_OUT
+	printf("in cropUID(%s): retVal = %s\n", id.c_str(), retVal.c_str());
+	#endif //DEBUG_OUT
+	return retVal;
 }
 
 struct threadArgument {
@@ -130,8 +150,8 @@ void* checkForMessage(void* arg)
 		}
 		else
 		{
-			printf("Sending to %s\n", telegram.getDestinationID());
-			evm->sendToClient(telegram.getDestinationID(), data, bytes);
+			printf("Sending to %s, isUniqueID: %s\n", telegram.getDestinationID(), telegram.isUniqueDestination() ? "true" : "false");
+			evm->sendToClient(telegram.getDestinationID(), telegram.isUniqueDestination(), data, bytes);
 		}
 
     }
@@ -324,9 +344,9 @@ void EventSystemMaster::removeClient(std::string id, SocketAddressNetwork* remAd
     }
 }
 
-void EventSystemMaster::sendToClient(std::string destination, void* data, int numOfBytes)
+void EventSystemMaster::sendToClient(std::string destination, bool isUniqueID, void* data, int numOfBytes)
 {
-	if (stringCompare(destination.c_str(), Telegram::ID_LOGGER.c_str()) && !this->loggerConnected)
+	if (stringCompare(cropID(destination).c_str(), Telegram::ID_LOGGER.c_str()) && !this->loggerConnected)
 	{
 		Telegram_Object* logTelegram = new Telegram_Object();
 		Log* logMessage = new Log();
@@ -336,7 +356,7 @@ void EventSystemMaster::sendToClient(std::string destination, void* data, int nu
 	else
 	{
 		int noClient = 0;
-		LocalClientMap::const_iterator result = this->localClients.find(destination);
+		LocalClientMap::const_iterator result = this->localClients.find(cropID(destination));
 		if (result == this->localClients.end())
 		{
 			noClient += 1;
@@ -345,10 +365,22 @@ void EventSystemMaster::sendToClient(std::string destination, void* data, int nu
 		{
 			for (SocketAddressLocal address : result->second)
 			{
-				this->master.send(data, numOfBytes, &address);
+				if (isUniqueID)
+				{
+					printf("Local: %s\n", address.getUniqueID());
+					if (stringCompare(address.getUniqueID(), cropUID(destination).c_str()))
+					{
+						this->master.send(data, numOfBytes, &address);
+					}
+				}
+				else
+				{
+					this->master.send(data, numOfBytes, &address);
+				}
 			}
 		}
-		NetworkClientMap::const_iterator result2 = this->networkClients.find(destination);
+
+		NetworkClientMap::const_iterator result2 = this->networkClients.find(cropID(destination));
 		if (result2 == this->networkClients.end())
 		{
 			noClient += 1;
@@ -357,13 +389,23 @@ void EventSystemMaster::sendToClient(std::string destination, void* data, int nu
 		{
 			for (SocketAddressNetwork address : result2->second)
 			{
-				this->master.send((void*)data, numOfBytes, &address);
+				if (isUniqueID)
+				{
+					printf("Network: %s\n", address.getUniqueID());
+					if (stringCompare(address.getUniqueID(), cropUID(destination).c_str()))
+					{
+						this->master.send(data, numOfBytes, &address);
+					}
+				}
+				else
+					this->master.send(data, numOfBytes, &address);
 			}
 		}
 
+
 		if (noClient >= 2)
 		{
-			LoggerAdapter::log(Log::WARNING, "no client " + destination + " connected yet");
+			LoggerAdapter::log(Log::WARNING, "no client " + cropID(destination) + " connected yet");
 		}
 	}
 
@@ -374,7 +416,7 @@ void EventSystemMaster::log(Telegram_Object* log)
 	if (this->loggerConnected)
 	{
 		int bytes = log->serialize(this->dataPointer);
-		this->sendToClient("LOGGER", this->dataPointer, bytes);
+		this->sendToClient("LOGGER", false, this->dataPointer, bytes);
 	}
 	else
 	{

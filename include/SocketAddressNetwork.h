@@ -11,11 +11,14 @@
 #include <netinet/in.h>
 #include "SocketAddress.h"
 #include "Serializeable.h"
+#include "constants.h"
+
+#include <string>
 
 class SocketAddressNetwork: public SocketAddress, Serializeable
 {
 public:
-	SocketAddressNetwork(sockaddr_in address, socklen_t len);
+	SocketAddressNetwork(sockaddr_in address, socklen_t len, std::string uid);
 	SocketAddressNetwork();
 	virtual ~SocketAddressNetwork();
 
@@ -31,6 +34,8 @@ public:
 
 	bool operator==(SocketAddressNetwork* address);
 
+	virtual char* getUniqueID();
+
 	virtual int getSerializedSize();
 	virtual int serialize(void* const data);
 	virtual int deserialize(void const * const data);
@@ -39,6 +44,7 @@ private:
 	sockaddr_in address;
 	socklen_t len;
 	uint8_t addressSize;
+	char uniqueID[UNIQUEID_SIZE];
 };
 
 struct _socketAddress_network{

@@ -19,7 +19,7 @@
 #include <stdlib.h>
 
 
-SocketIO_Network::SocketIO_Network(in_port_t port, char* device) : myAddress()
+SocketIO_Network::SocketIO_Network(in_port_t port, char* device)
 {
 	printf("Creating SocketIO_Network(%d)\n", port);
 	char uid[25];
@@ -93,16 +93,17 @@ SocketIO_Network::SocketIO_Network(in_port_t port, char* device) : myAddress()
 //	getsockname(this->socketFileDescriptor, (struct sockaddr*)&mySockAddress, &socklen);
 	socklen = 16;
 	printf("my IP Address: %x\n", mySockAddress.sin_addr.s_addr);
-	this->myAddress.setAddress(mySockAddress, socklen);
-
+	this->myAddress = new SocketAddressNetwork(mySockAddress, socklen, this->uniqueID);
 }
 
-SocketIO_Network::SocketIO_Network(sockaddr_in* address) : myAddress(*address, sizeof(address))
+SocketIO_Network::SocketIO_Network(sockaddr_in* address)
 {
 	printf("Creating SocketIO_Network(%d)\n", address->sin_addr.s_addr);
 	char uid[25];
 	snprintf(uid, 25, "UID=%ld", (long) getpid());
 	this->uniqueID = uid;
+
+	myAddress = new SocketAddressNetwork(*address, sizeof(*address), this->uniqueID);
 
 	this->socketFileDescriptor = socket(AF_INET, SOCK_DGRAM, 0);
 	bind(this->socketFileDescriptor, (struct sockaddr*)address, sizeof(sockaddr_in));
@@ -111,16 +112,17 @@ SocketIO_Network::SocketIO_Network(sockaddr_in* address) : myAddress(*address, s
 SocketIO_Network::~SocketIO_Network()
 {
 	close(this->socketFileDescriptor);
+	delete this->myAddress;
 }
 
 std::string SocketIO_Network::getUniqueID()
 {
-    return uniqueID;
+    return this->uniqueID;
 }
 
 struct SocketAddress* SocketIO_Network::getAddress()
 {
-    return ((SocketAddress*) &this->myAddress);
+    return ((SocketAddress*) this->myAddress);
 }
 
 int SocketIO_Network::getSocketFileDescriptor()

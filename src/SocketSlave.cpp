@@ -45,8 +45,9 @@ Socket_Slave::~Socket_Slave()
 
 int Socket_Slave::send(void* data, int numOfBytes)
 {
-	unsigned char* data1 = (unsigned char*) data;
+
 #ifdef DEBUG_OUT
+	unsigned char* data1 = (unsigned char*) data;
 	printf("Contents of Telegram\n");
 	for (int i=0; i<numOfBytes; i+=1)
 	{

@@ -19,6 +19,11 @@
 #define UNIQUEID_SIZE 30
 
 /**
+ * the length of a function description (used by TokenDaemon)
+ */
+#define FUNCTIONDESCRIPTION_SIZE 30
+
+/**
  * max characters in a log message
  */
 #define LOG_MESSAGE_SIZE 250

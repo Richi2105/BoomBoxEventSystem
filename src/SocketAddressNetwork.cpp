@@ -10,13 +10,15 @@
 #include <OS_DEF.h>
 #include "../include/SocketAddressNetwork.h"
 
-SocketAddressNetwork::SocketAddressNetwork(sockaddr_in address, socklen_t len)
+SocketAddressNetwork::SocketAddressNetwork(sockaddr_in address, socklen_t len, std::string uid)
 {
 	printf("Creating SocketAddressLocal(sockaddr_in)\n"
 			"Parameter: %x", address.sin_addr.s_addr);
     this->address = address;
     this->len = len;
     this->addressSize = sizeof(int8_t) + sizeof(socklen_t) + sizeof(sockaddr_in);
+    memset(this->uniqueID, 0, UNIQUEID_SIZE);
+    memcpy(this->uniqueID, uid.c_str(), UNIQUEID_SIZE < uid.size() ? UNIQUEID_SIZE : uid.size());
 }
 
 SocketAddressNetwork::SocketAddressNetwork()
@@ -66,7 +68,8 @@ void SocketAddressNetwork::convertTo_Struct(void* address)
 
 bool SocketAddressNetwork::isEqual(SocketAddressNetwork* address)
 {
-	if (this->address.sin_addr.s_addr != address->address.sin_addr.s_addr)
+	if (this->address.sin_addr.s_addr != address->address.sin_addr.s_addr
+			&& strncmp(this->uniqueID, address->uniqueID, UNIQUEID_SIZE) != 0)
 	{
 		return false;
 	}
@@ -81,6 +84,11 @@ bool SocketAddressNetwork::operator==(SocketAddressNetwork* address)
 	return this->isEqual(address);
 }
 
+char* SocketAddressNetwork::getUniqueID()
+{
+	return this->uniqueID;
+}
+
 int SocketAddressNetwork::getSerializedSize()
 {
 	int16_t size = 0;
@@ -90,6 +98,7 @@ int SocketAddressNetwork::getSerializedSize()
 
 	size += sizeof(this->addressSize);
 	size += sizeof(this->len);
+	size += sizeof(this->uniqueID[0]) * UNIQUEID_SIZE;
 
 	return size;
 }
@@ -106,6 +115,7 @@ int SocketAddressNetwork::serialize(void* const data)
 
 	packData(data2, this->len);
 	packData(data2, this->addressSize);
+	packNData(data2, this->uniqueID, UNIQUEID_SIZE);
 	return this->getSerializedSize();
 }
 int SocketAddressNetwork::deserialize(void const * const data)
@@ -120,6 +130,7 @@ int SocketAddressNetwork::deserialize(void const * const data)
 
 	unpackData(data2, this->len);
 	unpackData(data2, this->addressSize);
+	unpackNData(data2, this->uniqueID, UNIQUEID_SIZE);
 	return this->getSerializedSize();
 }
 

@@ -64,7 +64,7 @@ public:
 	virtual std::string getUniqueID();
 
 private:
-	SocketAddressNetwork myAddress;
+	SocketAddressNetwork* myAddress;
 	int socketFileDescriptor;
 	std::string uniqueID;
 };

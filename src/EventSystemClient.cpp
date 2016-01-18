@@ -218,9 +218,14 @@ pthread_cond_t* EventSystemClient::getFetchedCondition()
 
 void EventSystemClient::send(Telegram* telegram)
 {
-	memset(this->sendMemory, 0, 4096);
+	memset(this->sendMemory, 0, DATASIZE);
 	int bytes = telegram->serialize(this->sendMemory);
     this->socket.send(this->sendMemory, bytes);
+}
+
+void EventSystemClient::send(void* data, int numOfBytes)
+{
+	this->socket.send(data, numOfBytes);
 }
 
 void EventSystemClient::log(Telegram_Object* log)

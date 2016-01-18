@@ -1,6 +1,8 @@
 #ifndef EVENTSYSTEMPARTICIPANTIMPL_H
 #define EVENTSYSTEMPARTICIPANTIMPL_H
 
+#define DEBUG_OUT
+
 #include "Telegram/Telegram.h"
 #include <string>
 #include <pthread.h>
@@ -68,7 +70,11 @@ class EventSystemClient : public EventSystemParticipant
         void* getMessageMemory();
 
         void send(Telegram* telegram);
+        void send(void* data, int numOfBytes);
         virtual void log(Telegram_Object* log);
+
+        //TODO: request routine (answers telegram with uniqueID as source id)
+        //TODO: set function pointer for own request routine
 
         /**
          * receive data

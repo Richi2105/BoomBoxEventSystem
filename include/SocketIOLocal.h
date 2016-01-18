@@ -53,7 +53,7 @@ public:
 	virtual std::string getUniqueID();
 
 protected:
-	SocketAddressLocal myAddress;
+	SocketAddressLocal* myAddress;
 	int socketFileDescriptor;
 	std::string uniqueID;
 private:

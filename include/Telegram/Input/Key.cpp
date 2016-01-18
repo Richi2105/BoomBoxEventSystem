@@ -99,8 +99,8 @@ void Key::setLongPressed(bool longpressed)
 int Key::getSerializedSize()
 {
 	int16_t size = 0;
-	size += sizeof(char)*KEYDESCRIPTION_SIZE;
-	size += sizeof(longpressed);
+	size += sizeof(this->keyIdentifier);
+	size += sizeof(this->longpressed);
 	return size;
 }
 
