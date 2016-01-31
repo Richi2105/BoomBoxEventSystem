@@ -24,7 +24,7 @@ Socket_Slave::Socket_Slave()
 {
 	printf("Creating Socket_Slave()\n");
     this->socket = new SocketIO_Local();
-    this->masterAddress = new SocketAddressLocal();
+//    this->masterAddress = new SocketAddressLocal();
     this->getAddressFromSharedMemory(((SocketAddressLocal**)&this->masterAddress));
     printf("Master Address: %s\n", ((sockaddr_un*)((SocketAddressLocal*)this->masterAddress)->getAddress())->sun_path);
     this->local = true;
@@ -40,7 +40,8 @@ Socket_Slave::Socket_Slave(in_port_t port, char* networkDevice)
 
 Socket_Slave::~Socket_Slave()
 {
-    //dtor
+    delete this->socket;
+    delete this->masterAddress;
 }
 
 int Socket_Slave::send(void* data, int numOfBytes)
@@ -51,12 +52,17 @@ int Socket_Slave::send(void* data, int numOfBytes)
 	printf("Contents of Telegram\n");
 	for (int i=0; i<numOfBytes; i+=1)
 	{
+		if ((i) % 8==0)
+		{
+			printf("\t(%d:) ", i);
+		}
+
 		printf("%2x ", *(data1+i));
-		if (i%16==0)
+
+		if ((i+1) % 16==0)
 		{
 			printf("\n");
 		}
-
 	}
 #endif //DEBUG_OUT
     return sendto(this->socket->getSocketFileDescriptor(), data, numOfBytes, 0, this->masterAddress->getAddress(), this->masterAddress->getLen());
@@ -64,7 +70,27 @@ int Socket_Slave::send(void* data, int numOfBytes)
 
 int Socket_Slave::receive(void* data, int numOfBytes)
 {
-	return this->socket->receive(data, numOfBytes);
+	int bytes = this->socket->receive(data, numOfBytes);
+#ifdef DEBUG_OUT
+	unsigned char* data1 = (unsigned char*) data;
+	printf("Contents of Telegram\n");
+	for (int i=0; i<bytes; i+=1)
+	{
+		if ((i) % 8==0)
+		{
+			printf("\t(%d:) ", i);
+		}
+
+		printf("%2x ", *(data1+i));
+
+		if ((i+1) % 16==0)
+		{
+			printf("\n");
+		}
+
+	}
+#endif //DEBUG_OUT
+	return bytes;
 }
 
 std::string Socket_Slave::getUniqueID()
@@ -126,6 +152,12 @@ void Socket_Slave::getAddressFromSharedMemory(SocketAddressLocal** address)
 	(*address) = new SocketAddressLocal(*(SocketAddressLocal*) mapAddress);
 
 	printf("%s\n", ((sockaddr_un*)(*address)->getAddress())->sun_path);
+
+#ifdef RASPBERRY
+	shmdt(mapAddress);
+#else
+	munmap(mapAddress, sizeof(SocketAddressLocal));
+#endif //RASPBERRY
 
 	close(fd);
 }

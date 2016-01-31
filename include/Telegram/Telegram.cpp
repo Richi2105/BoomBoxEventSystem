@@ -1,10 +1,12 @@
 #include <stdint.h>
 #include <string>
 #include <OS_DEF.h>
-#include "../include/Telegram/Telegram.h"
+#include "Telegram.h"
 
 namespace EventSystem
 {
+
+EventSystemParticipant* Telegram::esp = nullptr;
 
 std::string Telegram::ID_LOGGER = "LOGGER";
 std::string Telegram::ID_MASTER = "MASTER";
@@ -13,22 +15,56 @@ std::string Telegram::ID_DISPLAYCLIENT = "DISPLAYCLIENT";
 std::string Telegram::ID_AUDIOPLAYER = "AUDIOPLAYER";
 std::string Telegram::ID_INPUT = "INPUT";
 
-Telegram::Telegram(std::string identifier, std::string source)
+const uint8 Telegram::ANONYMOUS = TELEGRAM_ANONYMOUS;
+const uint8 Telegram::LOG = TELEGRAM_LOG;
+const uint8 Telegram::REGISTER = TELEGRAM_REGISTER;
+const uint8 Telegram::UNREGISTER = TELEGRAM_UNREGISTER;
+const uint8 Telegram::REQUEST = TELEGRAM_REQUEST;
+const uint8 Telegram::REQUESTANSWER = TELEGRAM_REQUESTANSWER;
+const uint8 Telegram::PING = TELEGRAM_PING;
+const uint8 Telegram::INPUT = TELEGRAM_INPUT;
+const uint8 Telegram::DISPLAYDATA = TELEGRAM_DISPLAYDATA;
+const uint8 Telegram::MEDIA = TELEGRAM_MEDIA;
+const uint8 Telegram::QUIT = TELEGRAM_QUIT;
+
+Telegram::Telegram(std::string identifier)
 {
-//            this->destinationID = identifier;
 	memset(destinationID, 0, UNIQUEID_SIZE);
     memcpy(destinationID, identifier.c_str(), UNIQUEID_SIZE < identifier.size() ? UNIQUEID_SIZE : identifier.size());
 
 	memset(sourceID, 0, UNIQUEID_SIZE);
-    memcpy(sourceID, source.c_str(), UNIQUEID_SIZE < source.size() ? UNIQUEID_SIZE : source.size());
-//            telegramSize = sizeof(char) * ID_SIZE + sizeof(int);
+	if (Telegram::esp != nullptr)
+    {
+		memcpy(sourceID, esp->getUniqueIdentifier().c_str(), UNIQUEID_SIZE < esp->getUniqueIdentifier().size() ? UNIQUEID_SIZE : esp->getUniqueIdentifier().size());
+    }
     this->type = ANONYMOUS;
-    this->telegramSize = sizeof(Telegram);
+//    this->telegramSize = sizeof(Telegram);
     this->uniqueDestination = 0;
 }
+
+Telegram::Telegram()
+{
+	memset(destinationID, 0, UNIQUEID_SIZE);
+
+	memset(sourceID, 0, UNIQUEID_SIZE);
+	if (Telegram::esp != nullptr)
+    {
+		memcpy(sourceID, esp->getUniqueIdentifier().c_str(), UNIQUEID_SIZE < esp->getUniqueIdentifier().size() ? UNIQUEID_SIZE : esp->getUniqueIdentifier().size());
+    }
+
+    this->type = ANONYMOUS;
+//    this->telegramSize = sizeof(Telegram);
+    this->uniqueDestination = 0;
+}
+
 Telegram::~Telegram()
 {
     //dtor
+}
+
+void Telegram::initTelegram(EventSystemParticipant* esp)
+{
+	Telegram::esp = esp;
 }
 
 void Telegram::setUniqueDestination(bool set)
@@ -72,15 +108,16 @@ void Telegram::setSource(std::string source)
 //@DEPRECATED
 int Telegram::getSize()
 {
-    return this->telegramSize;
+    //return this->telegramSize;
+	return -1;
 }
 
-Telegram::telegram_type Telegram::getType()
+uint8 Telegram::getType()
 {
 	return this->type;
 }
 
-void Telegram::setType(Telegram::telegram_type type)
+void Telegram::setType(uint8 type)
 {
 	this->type = type;
 }
@@ -94,7 +131,7 @@ int Telegram::getSerializedSize()
 	size += sizeof(this->destinationID[0])*UNIQUEID_SIZE;
 	size += sizeof(this->sourceID[0])*UNIQUEID_SIZE;
 	size += sizeof(this->type);
-	size += sizeof(this->telegramSize);
+	//size += sizeof(this->telegramSize);
 	size += sizeof(this->uniqueDestination);
 
 	return size;
@@ -109,7 +146,7 @@ int Telegram::serialize(void* const data)
 	packNData(data2, this->destinationID, UNIQUEID_SIZE);
 	packNData(data2, this->sourceID, UNIQUEID_SIZE);
 	packData(data2, this->type);
-	packData(data2, this->telegramSize);
+	//packData(data2, this->telegramSize);
 	packData(data2, this->uniqueDestination);
 
 	#ifdef DEBUG_OUT
@@ -127,7 +164,7 @@ int Telegram::deserialize(void const * const data)
 	unpackNData(data2, this->destinationID, UNIQUEID_SIZE);
 	unpackNData(data2, this->sourceID, UNIQUEID_SIZE);
 	unpackData(data2, this->type);
-	unpackData(data2, this->telegramSize);
+	//unpackData(data2, this->telegramSize);
 	unpackData(data2, this->uniqueDestination);
 
 	#ifdef DEBUG_OUT

@@ -12,9 +12,15 @@
 #include <string.h>
 #include <OS_DEF.h>
 
+/**
+ * packs data to destination, increments destination by sizeof(source) bytes
+ */
 #define packData(dest, source) 	memcpy(dest, &source, sizeof(source)); \
 								dest += sizeof(source);
 
+/**
+ * packs n data to destination, increments destination by sizeof(source) bytes multiplied by n
+ */
 #define packNData(dest, source, n) 	memcpy(dest, source, sizeof(source[0])*n); \
 									dest += sizeof(source[0])*n;
 

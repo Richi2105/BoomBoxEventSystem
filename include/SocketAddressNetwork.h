@@ -23,6 +23,7 @@ public:
 	virtual ~SocketAddressNetwork();
 
 	void setAddress(sockaddr_in address, socklen_t len);
+	void setUID(std::string uid);
 
 	sockaddr* getAddress();
 	socklen_t getLen();
@@ -30,11 +31,13 @@ public:
 
 	void convertTo_Struct(void* address);
 
-	bool isEqual(SocketAddressNetwork* address);
+	virtual bool isEqual(SocketAddress* address);
 
-	bool operator==(SocketAddressNetwork* address);
+	virtual bool operator==(SocketAddress* address);
 
 	virtual char* getUniqueID();
+
+	virtual bool isLocal();
 
 	virtual int getSerializedSize();
 	virtual int serialize(void* const data);

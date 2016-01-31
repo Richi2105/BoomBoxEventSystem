@@ -39,6 +39,11 @@
 #define DATASIZE 4096
 
 /**
+ * maximum chararcters of a custom state
+ */
+#define CUSTOMSTATE 20
+
+/**
  * the standard port for network communication
  * 26901: Eve Online
  * 27000: QuakeWorkld

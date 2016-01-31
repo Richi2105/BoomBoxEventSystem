@@ -1,7 +1,7 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 
-
+#include <time.h>
 #include <fcntl.h>
 
 #include <string.h>
@@ -10,12 +10,21 @@
 #include <stdlib.h>
 #include "../include/SocketIOLocal.h"
 
-
 SocketIO_Local::SocketIO_Local()
 {
 	printf("Creating SocketIO_Local\n");
+
+    srand((int) getpid() + (int) time(NULL));
+    int randomNr = rand();
+    for (int i=0; i<randomNr%5; i+=1)
+    	rand();
+    randomNr = rand() % 10000;
+
+    char path[22];
+    snprintf(path, 22, "%08x:%04d", getpid(), randomNr);
+
     char uid[25];
-    snprintf(uid, 25, "UID=%ld", (long) getpid());
+    snprintf(uid, 25, "%s", path);
     this->uniqueID = uid;
 
     struct sockaddr_un mySockAddress;
@@ -26,7 +35,8 @@ SocketIO_Local::SocketIO_Local()
     socklen = 64;
     memset(&mySockAddress, 0, sizeof(struct sockaddr_un));
     mySockAddress.sun_family = AF_UNIX;
-    snprintf(mySockAddress.sun_path, sizeof(mySockAddress.sun_path), "/tmp/ipc_%ld_%d", (long) getpid(), rand());
+
+    snprintf(mySockAddress.sun_path, sizeof(mySockAddress.sun_path), "/tmp/ipc_%s", path);
 
     bind(this->socketFileDescriptor, (struct sockaddr*)&mySockAddress, sizeof(sockaddr_un));
 //    getsockname(this->socketFileDescriptor, (struct sockaddr*)&mySockAddress, &socklen);

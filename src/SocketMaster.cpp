@@ -17,6 +17,7 @@ Socket_Master::Socket_Master(in_port_t port)
     this->localSocket = new SocketIO_Local();
     this->networkSocket = new SocketIO_Network(port, NULL);
     this->mapAddress = NULL;
+    this->shmFileDescriptor = 0;
 }
 
 Socket_Master::Socket_Master(char* networkDevice, in_port_t port)
@@ -24,11 +25,19 @@ Socket_Master::Socket_Master(char* networkDevice, in_port_t port)
     this->localSocket = new SocketIO_Local();
     this->networkSocket = new SocketIO_Network(port, networkDevice);
     this->mapAddress = NULL;
+    this->shmFileDescriptor = 0;
 }
 
 Socket_Master::~Socket_Master()
 {
-    //dtor
+    delete this->localSocket;
+    delete this->networkSocket;
+
+#ifdef RASPBERRY
+	shmdt(mapAddress);
+#else
+    shm_unlink("/shm_EventSystemSHM");
+#endif //RASPBERRY
 }
 
 std::string Socket_Master::getUniqueID()
@@ -39,25 +48,24 @@ std::string Socket_Master::getUniqueID()
 void Socket_Master::broadcast()
 {
     printf("broadcasting...\n");
-    int fd;
 #ifdef RASPBERRY
-    fd = shmget((key_t) 4321, sizeof(SocketAddressLocal), 0666 | IPC_CREAT);
+    this->shmFileDescriptor = shmget((key_t) 4321, sizeof(SocketAddressLocal), 0666 | IPC_CREAT);
 #else
-    fd = shm_open("/shm_EventSystemSHM", O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+    this->shmFileDescriptor = shm_open("/shm_EventSystemSHM", O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
 #endif //RASPBERRY
 
-	if (fd == -1)
+	if (this->shmFileDescriptor == -1)
 	{
 		fprintf(stderr, "Error: shm_open()\n");
 		exit(1);
 	}
-	printf("File Descriptor to /shm_EventSystemSHM: %d\n", fd);
-	ftruncate(fd, sizeof(SocketAddressLocal));
+	printf("File Descriptor to /shm_EventSystemSHM: %d\n", this->shmFileDescriptor);
+	ftruncate(this->shmFileDescriptor, sizeof(SocketAddressLocal));
 
 #ifdef RASPBERRY
-	this->mapAddress = shmat(fd, NULL, 0);
+	this->mapAddress = shmat(this->shmFileDescriptor, NULL, 0);
 #else
-	this->mapAddress = mmap(NULL, sizeof(SocketAddressLocal), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+	this->mapAddress = mmap(NULL, sizeof(SocketAddressLocal), PROT_READ | PROT_WRITE, MAP_SHARED, this->shmFileDescriptor, 0);
 #endif //RASPBERRY
 
 	if (mapAddress == MAP_FAILED || mapAddress == NULL)
@@ -78,7 +86,13 @@ void Socket_Master::broadcast()
 
 //    printf("path to me: %s, with len %d\n", ((sockaddr_un*)((SocketAddressLocal*)mapAddress)->getAddress())->sun_path, esaddress->getLen());
 
-    close(fd);
+#ifdef RASPBERRY
+
+#else
+	munmap(mapAddress, sizeof(SocketAddressLocal));
+#endif //RASPBERRY
+
+    close(this->shmFileDescriptor);
 }
 
 SocketIO_Local* Socket_Master::getLocalSocket()
@@ -89,6 +103,14 @@ SocketIO_Local* Socket_Master::getLocalSocket()
 SocketIO_Network* Socket_Master::getNetworkSocket()
 {
 	return this->networkSocket;
+}
+
+int Socket_Master::send(void* data, int numOfBytes, SocketAddress* dest)
+{
+	if (dest->isLocal())
+		return this->send(data, numOfBytes, (SocketAddressLocal*) dest);
+	else
+		return this->send(data, numOfBytes, (SocketAddressNetwork*) dest);
 }
 
 int Socket_Master::send(void* data, int numOfBytes, SocketAddressLocal* dest)

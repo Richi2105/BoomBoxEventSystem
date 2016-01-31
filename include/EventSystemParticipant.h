@@ -7,7 +7,12 @@
 #include "SocketIOLocal.h"
 #include "SocketAddress.h"
 
-#include "Telegram/TelegramObject.h"
+//#include "Telegram/TelegramObject.h"
+
+namespace EventSystem
+{
+
+class Telegram_Object;
 
 class EventSystemParticipant
 {
@@ -17,12 +22,9 @@ public:
 	virtual std::string getUniqueIdentifier() = 0;
 	virtual SocketAddress* getAddress() = 0;
 	virtual SocketIO* getSocket() = 0;
-	virtual void log(EventSystem::Telegram_Object* log) = 0;
-
-
-
+	virtual void log(Telegram_Object* log) = 0;
 };
 
-
+} /* namespace EventSystem */
 
 #endif // EVENTSYSTEMPARTICIPANT_H_INCLUDED

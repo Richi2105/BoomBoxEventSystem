@@ -6,6 +6,7 @@
 
 #include "SocketAddressLocal.h"
 #include "SocketAddressNetwork.h"
+#include "SocketAddress.h"
 #include "SocketIOLocal.h"
 #include "SocketIONetwork.h"
 
@@ -29,6 +30,12 @@ class Socket_Master
         virtual ~Socket_Master();
 
         /**
+         * send stuff to the specified address
+         * in this function it is determined if it is local send or network send
+         */
+        int send(void* data, int numOfBytes, SocketAddress* dest);
+
+        /**
          * send stuff to the specified address locally
          */
         int send(void* data, int numOfBytes, SocketAddressLocal* dest);
@@ -49,6 +56,7 @@ class Socket_Master
         SocketIO_Network* networkSocket;
         SocketIO_Local* localSocket;
         void* mapAddress;
+        int shmFileDescriptor;
 };
 
 #endif // SOCKETREADERMASTER_H

@@ -9,6 +9,25 @@
 
 namespace EventSystem {
 
+const char* leveldescriptions[5] = {
+		"Info",
+		"Status",
+		"Warning",
+		"Severe",
+		"unknown"
+};
+
+const char* Log::getLevelDescription(level_t level)
+{
+	switch (level){
+	case Log::INFO: return leveldescriptions[0];
+	case Log::STATUS: return leveldescriptions[1];
+	case Log::WARNING: return leveldescriptions[2];
+	case Log::SEVERE: return leveldescriptions[3];
+	default: return leveldescriptions[4];
+	}
+}
+
 Log::Log(EventSystemParticipant* source, std::string log, Log::level_t level)
 {
     this->logtime = time(NULL);

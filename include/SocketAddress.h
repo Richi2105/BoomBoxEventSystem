@@ -9,10 +9,44 @@ class SocketAddress
     public:
 		virtual ~SocketAddress() = 0;
 
+		/**
+		 * @return: a struct pointer to a sockaddr structure. It is either a sockaddr_in or sockaddr_un struct,
+		 * depending on the return value of isLocal().
+		 * @see isLocal()
+		 */
         virtual sockaddr* getAddress() = 0;
+
+        /**
+         * @return the length of the sockaddr structure depending on the system and if it is a local address
+         * or a network address.
+         */
         virtual socklen_t getLen() = 0;
+
+        /**
+         * @deprecated
+         */
         virtual uint8_t getSize() = 0;
+
+        /**
+         * @return: the unique id set by the correspondent SocketIO object.
+         * Warning: this is not what the EventSystemClient would return, it adds it's name to it.
+         * To fix this issue, call setUID(EventSystemClient::getUniqueID()) in the proper SocketAddress object.
+         */
         virtual char* getUniqueID() = 0;
+
+        /**
+         * @return: whether the object is a local address (true) or a network address (false)
+         */
+        virtual bool isLocal() = 0;
+
+        /**
+         * checks if another address has the same attributes:
+         * 	-same unique name
+         * 	-same sockaddr (sockaddr_un.sun_address or sockaddr_in.sin_address value)
+         * @return: false if it is not equal, true if it is equal.
+         */
+        virtual bool isEqual(SocketAddress*) = 0;
+        virtual bool operator==(SocketAddress*) = 0;
 };
 /*
 //typedef class SocketAddress SockAddress;

@@ -68,6 +68,7 @@ public:
 
 	/**
 	 * @return: a unique string consisting of the Process Identification Number of this process.
+	 * Warning: this is not the same Unique ID returned by a EventSystemClient because it adds it's name to it.
 	 */
 	std::string getUniqueID();
 

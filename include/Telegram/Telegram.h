@@ -6,10 +6,23 @@
 #include <string.h>
 #include <stdint.h>
 #include <OS_DEF.h>
+
+#include "../EventSystemParticipant.h"
 #include "../constants.h"
 #include "../Serializeable.h"
 
-//TODO: factory for all kinds of ObjectTelegrams
+#define TELEGRAM_ANONYMOUS 0
+#define TELEGRAM_LOG 1
+#define TELEGRAM_REGISTER 2
+#define TELEGRAM_UNREGISTER 3
+#define TELEGRAM_REQUEST 4
+#define TELEGRAM_REQUESTANSWER 5
+#define TELEGRAM_PING 6
+#define TELEGRAM_INPUT 7
+#define TELEGRAM_DISPLAYDATA 8
+#define TELEGRAM_MEDIA 9
+#define TELEGRAM_QUIT 254
+
 
 namespace EventSystem
 {
@@ -17,17 +30,21 @@ namespace EventSystem
 class Telegram : public Serializeable
 {
     public:
-		enum telegram_type {ANONYMOUS, LOG, REGISTER, UNREGISTER, REQUEST, INPUT, DISPLAYDIMENSION, MEDIA, DISPLAYDATA};
-		//TODO: telegram_type should be struct/class which can be extended by values
-		/**
-		 * class telegram_type{
-		 * 	public:
-		 * 	int32 type;
-		 * 	const static int32 ... = ...;
-		 * }
-		 */
+		//enum telegram_type {ANONYMOUS, LOG, REGISTER, UNREGISTER, REQUEST, INPUT, DISPLAYDIMENSION, MEDIA, DISPLAYDATA, PING, QUIT};
+		static const uint8 ANONYMOUS;
+		static const uint8 LOG;
+		static const uint8 REGISTER;
+		static const uint8 UNREGISTER;
+		static const uint8 REQUEST;
+		static const uint8 REQUESTANSWER;
+		static const uint8 PING;
+		static const uint8 INPUT;
+		static const uint8 DISPLAYDATA;
+		static const uint8 MEDIA;
+		static const uint8 QUIT;
 
-        Telegram(std::string identifier, std::string source = "");
+        Telegram(std::string identifier);
+        Telegram();
         virtual ~Telegram();
 
         //TODO: static function init(EventSystemParticipant* esp), automatically sets source
@@ -53,15 +70,19 @@ class Telegram : public Serializeable
     	virtual int serialize(void* const data);
     	virtual int deserialize(void const * const data);
 
-    	telegram_type getType();
-    	void setType(telegram_type type);
+    	uint8 getType();
+    	void setType(uint8 type);
+
+    	static void initTelegram(EventSystemParticipant* esp);
 
     protected:
 		int8 destinationID[UNIQUEID_SIZE];
 		int8 sourceID[UNIQUEID_SIZE];
-		telegram_type type;
+		uint8 type;
 		int8 uniqueDestination;
-        int32 telegramSize;
+        //int32 telegramSize;
+
+        static EventSystemParticipant* esp;
 };
 
 } /* namespace EventSystem */

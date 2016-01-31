@@ -24,8 +24,8 @@ class SocketIO_Network : public SocketIO
 public:
 	/**
 	 * constructs a socket, the belonging address is taken
-	 * a: by IP address (address is 192.168.xxx.xxx)
-	 * b: by device name, if paramter devive != nullptr
+	 * a: by IP address (address might be 192.168.xxx.xxx)
+	 * b: by device name, like eth0 or wlan0
 	 */
 	SocketIO_Network(in_port_t port, char* device);
 

@@ -16,13 +16,13 @@ Register_Local::Register_Local()
 
 Register_Local::Register_Local(SocketAddressLocal* address, std::string clientName)
 {
-	this->clientAddress = address;
+	this->clientAddress = new SocketAddressLocal(*address);
 	memset(this->clientID, 0, ID_SIZE);
     memcpy(this->clientID, clientName.c_str(), ID_SIZE < clientName.size() ? ID_SIZE : clientName.size());
 }
 
 Register_Local::~Register_Local() {
-	// TODO Auto-generated destructor stub
+	delete this->clientAddress;
 }
 
 SocketAddressLocal* Register_Local::getClientAddress()

@@ -7,9 +7,14 @@
 
 #include "../include/EventSystemParticipant.h"
 
+namespace EventSystem
+{
+
 EventSystemParticipant::~EventSystemParticipant()
 {
 
 }
+
+} /* namespace EventSystem */
 
 

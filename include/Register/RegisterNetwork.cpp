@@ -16,13 +16,13 @@ Register_Network::Register_Network()
 
 Register_Network::Register_Network(SocketAddressNetwork* address, std::string clientName)
 {
-	this->clientAddress = address;
+	this->clientAddress = new SocketAddressNetwork(*address);
 	memset(this->clientID, 0, ID_SIZE);
     memcpy(this->clientID, clientName.c_str(), ID_SIZE < clientName.size() ? ID_SIZE : clientName.size());
 }
 
 Register_Network::~Register_Network() {
-	// TODO Auto-generated destructor stub
+	delete this->clientAddress;
 }
 
 SocketAddressNetwork* Register_Network::getClientAddress()

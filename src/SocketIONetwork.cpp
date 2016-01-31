@@ -22,6 +22,13 @@
 SocketIO_Network::SocketIO_Network(in_port_t port, char* device)
 {
 	printf("Creating SocketIO_Network(%d)\n", port);
+
+	bool isIP = false;
+	if ( strchr(device, '.') )
+		isIP = true;
+	else
+		isIP = false;	//is device
+
 	char uid[25];
 	snprintf(uid, 25, "UID=%ld", (long) getpid());
 	this->uniqueID = uid;
@@ -36,9 +43,9 @@ SocketIO_Network::SocketIO_Network(in_port_t port, char* device)
 	mySockAddress.sin_family = AF_INET;
 	mySockAddress.sin_port = port;
 
-	struct ifaddrs * ifAddrStruct=NULL;
-	struct ifaddrs * ifa=NULL;
-	void * tmpAddrPtr=NULL;
+	struct ifaddrs* ifAddrStruct = NULL;
+	struct ifaddrs* ifa = NULL;
+	void* tmpAddrPtr = NULL;
 
 	getifaddrs(&ifAddrStruct);
 
@@ -54,9 +61,9 @@ SocketIO_Network::SocketIO_Network(in_port_t port, char* device)
 			char addressBuffer[INET_ADDRSTRLEN];
 			inet_ntop(AF_INET, tmpAddrPtr, addressBuffer, INET_ADDRSTRLEN);
 			printf("%s IP Address %s\n", ifa->ifa_name, addressBuffer);
-			if (device == nullptr)
+			if (isIP)
 			{
-				if (!strncmp(addressBuffer, "192.168.", 8))
+				if (!strncmp(addressBuffer, device, 8))
 				{
 					mySockAddress.sin_addr = ((struct sockaddr_in *)ifa->ifa_addr)->sin_addr;
 					printf("Address saved\n");
@@ -103,7 +110,7 @@ SocketIO_Network::SocketIO_Network(sockaddr_in* address)
 	snprintf(uid, 25, "UID=%ld", (long) getpid());
 	this->uniqueID = uid;
 
-	myAddress = new SocketAddressNetwork(*address, sizeof(*address), this->uniqueID);
+	this->myAddress = new SocketAddressNetwork(*address, sizeof(*address), this->uniqueID);
 
 	this->socketFileDescriptor = socket(AF_INET, SOCK_DGRAM, 0);
 	bind(this->socketFileDescriptor, (struct sockaddr*)address, sizeof(sockaddr_in));
