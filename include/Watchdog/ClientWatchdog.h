@@ -49,7 +49,6 @@ public:
 
 	/**
 	 * @return the client (aka SocketAddress*)
-	 * this gives no information whatsoever of the client being local or network
 	 */
 	SocketAddress* getClientAddress();
 

@@ -48,9 +48,9 @@ const char* StateMachine::getStateDescription()
 pthread_mutex_lock(&this->memberMutex);
 	if (this->currentState > StateMachine::EVENTSYSTEM_STATE_CUSTOM)
 	{
-		unsigned int index = this->currentState - StateMachine::EVENTSYSTEM_STATE_CUSTOM;
-		if (index <= this->customStates.size() && index > 0)
-			retVal = (this->customStates.at(index - 1)).c_str();
+		unsigned int index = this->currentState - StateMachine::EVENTSYSTEM_STATE_CUSTOM - 1;
+		if (index < this->customStates.size())
+			retVal = (this->customStates.at(index)).c_str();
 		else
 			retVal = statedescriptions[StateMachine::EVENTSYSTEM_STATE_CUSTOM];
 	}

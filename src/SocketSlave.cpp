@@ -33,7 +33,7 @@ Socket_Slave::Socket_Slave()
 Socket_Slave::Socket_Slave(in_port_t port, char* networkDevice)
 {
 	printf("Creating Socket_Slave(%d)\n", port);
-	this->socket = new SocketIO_Network(port, NULL);
+	this->socket = new SocketIO_Network(port, networkDevice);
 	this->masterAddress = new SocketAddressNetwork();
 	this->local = false;
 }

@@ -21,7 +21,7 @@ namespace EventSystem {
 class Log : public Serializeable
 {
 public:
-	enum level_t {INFO, STATUS, WARNING, SEVERE};
+	enum level_t {STATUS, INFO, WARNING, SEVERE};
 
 	static const char* getLevelDescription(level_t level);
 

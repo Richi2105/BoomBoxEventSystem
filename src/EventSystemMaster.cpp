@@ -46,9 +46,6 @@ inline std::string cropID(std::string id)
 {
 	unsigned int pos = id.find_last_of('_') + 1;
 	std::string retVal = id.substr(pos > id.size() ? 0 : pos, ID_SIZE);
-	#ifdef DEBUG_OUT
-	printf("in cropID(%s): retVal = %s\n", id.c_str(), retVal.c_str());
-	#endif //DEBUG_OUT
 	return retVal;
 }
 
@@ -56,9 +53,6 @@ inline std::string cropUID(std::string id)
 {
 	unsigned int pos = id.find_first_of('_');
 	std::string retVal = id.substr(0, pos > id.size() ? 0 : pos);
-	#ifdef DEBUG_OUT
-	printf("in cropUID(%s): retVal = %s\n", id.c_str(), retVal.c_str());
-	#endif //DEBUG_OUT
 	return retVal;
 }
 
@@ -569,8 +563,8 @@ void EventSystemMaster::addClient(std::string id, SocketAddress* address)
     	this->inkrementConnectedLogger();
     }
 	pthread_mutex_unlock(&this->clientMutex);
-
-	LoggerAdapter::log(Log::INFO, "Client " + id + " registered");
+	std::string uid = address->getUniqueID();
+	LoggerAdapter::log(Log::INFO, "Client " + uid + " registered");
 }
 
 void EventSystemMaster::removeClient(std::string uid, SocketAddress* address)

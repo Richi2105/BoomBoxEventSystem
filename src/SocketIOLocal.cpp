@@ -46,8 +46,9 @@ SocketIO_Local::SocketIO_Local()
 
 SocketIO_Local::~SocketIO_Local()
 {
+	close(this->socketFileDescriptor);
+	unlink(((struct sockaddr_un*)this->myAddress->getAddress())->sun_path);
 	delete this->myAddress;
-    close(this->socketFileDescriptor);
 }
 
 std::string SocketIO_Local::getUniqueID()
