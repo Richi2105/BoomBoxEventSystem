@@ -59,6 +59,7 @@ void* checkWatchdog(void* arg)
 			break;
 		}
 	}
+	free(arg);
 	pthread_cleanup_pop(0);
 	return (void*) 0;
 }

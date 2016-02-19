@@ -24,7 +24,7 @@
 #include "../include/StateMachine/StateObject.h"
 #include "../include/StateMachine/StateMachine.h"
 
-#include "../include/Watchdog/ClientWatchdog.h"
+#include "../include/Watchdog/ClientWatchdogV2.h"
 
 
 namespace EventSystem
@@ -46,6 +46,9 @@ inline std::string cropID(std::string id)
 {
 	unsigned int pos = id.find_last_of('_') + 1;
 	std::string retVal = id.substr(pos > id.size() ? 0 : pos, ID_SIZE);
+	#ifdef DEBUG_OUT
+	printf("in cropID(%s): retVal = %s\n", id.c_str(), retVal.c_str());
+	#endif //DEBUG_OUT
 	return retVal;
 }
 
@@ -53,22 +56,30 @@ inline std::string cropUID(std::string id)
 {
 	unsigned int pos = id.find_first_of('_');
 	std::string retVal = id.substr(0, pos > id.size() ? 0 : pos);
+	#ifdef DEBUG_OUT
+	printf("in cropUID(%s): retVal = %s\n", id.c_str(), retVal.c_str());
+	#endif //DEBUG_OUT
 	return retVal;
 }
 
 inline int contains(ClientVector* vec, char* uid)
 {
 	int retVal = 0;
-	for (ClientWatchdog* client : *vec)
+	for (ClientWatchdogV2* client : *vec)
 	{
 		if ( stringCompare(client->getClientAddress()->getUniqueID(), uid) )
 		{
-			printf("contains(): found!\n");
+			#ifdef DEBUG_OUT
+			printf("in contains(vec, %s): retVal = %d\n", uid, retVal);
+			#endif //DEBUG_OUT
 			return retVal;
 		}
 		retVal += 1;
 	}
 	retVal = -1;
+	#ifdef DEBUG_OUT
+	printf("in contains(vec, %s): retVal = %d\n", uid, retVal);
+	#endif //DEBUG_OUT
 	return retVal;
 }
 
@@ -102,50 +113,74 @@ void* getStatus(void* arg)
     char* uid = (char*)((threadArgument*)arg)->dataPointer;
     bool* run = ((threadArgument*)arg)->run;
 
-    pthread_cleanup_push(cleanup_data, uid);
     pthread_cleanup_push(cleanup_data, arg);
+    pthread_cleanup_push(cleanup_data, uid);
 
     while (*run)
     {
-    	printf("getStatus Thread\n");
+		#ifdef DEBUG_OUT
+		printf("getStatus()\n");
+		#endif //DEBUG_OUT
     	pthread_mutex_lock(&evm->pingMutex);
     	pthread_cond_wait(&evm->pingCondition, &evm->pingMutex);
-    	memcpy(uid, evm->currUIDPingResponse, UNIQUEID_SIZE);
-		if (evm->currStatusPingResponse->getState() > StateMachine::EVENTSYSTEM_STATE_CUSTOM)
-		{
-			std::string message = "Client ";
-			message.append(uid);
-			message.append(" has status ");
-			message.append(evm->currStatusPingResponse->getCustomState());
-			LoggerAdapter::log(Log::STATUS, message);
-		}
-		else
-		{
-			std::string message = "Client ";
-			message.append(uid);
-			message.append(" has status ");
-			message.append(StateMachine::getDefaultStateDescription(evm->currStatusPingResponse->getState()));
-			LoggerAdapter::log(Log::STATUS, message);
-		}
+    	int responseNrs = evm->getResponseNrs();
     	pthread_mutex_unlock(&evm->pingMutex);
-    	pthread_cond_signal(&evm->pingCondition);
 
-    	ClientWatchdog* client = evm->getClientByUID(uid);
-    	if (client == nullptr)
+
+    	while (responseNrs != 0)
     	{
-    		std::string message = "A client ";
-    		message += uid;
-    		message += " answered the ping signal but is not connected";
-    		LoggerAdapter::log(Log::SEVERE, message);
-    	}
-    	else
-    	{
-    		client->responded();
+    		pthread_mutex_lock(&evm->pingMutex);
+        	EventSystemMaster::pingResponse* pR = evm->popResponse();
+        	responseNrs = evm->getResponseNrs();
+        	pthread_mutex_unlock(&evm->pingMutex);
+
+        	if (pR != nullptr)
+        	{
+    	//    	memcpy(uid, evm->currUIDPingResponse, UNIQUEID_SIZE);
+    			if (pR->state->getState() > StateMachine::EVENTSYSTEM_STATE_CUSTOM)
+    			{
+    				std::string message = "Client ";
+    				message.append(pR->uid);
+    				message.append(" has status ");
+    				message.append(pR->state->getCustomState());
+    				LoggerAdapter::log(Log::STATUS, message);
+    			}
+    			else
+    			{
+    				std::string message = "Client ";
+    				message.append(pR->uid);
+    				message.append(" has status ");
+    				message.append(StateMachine::getDefaultStateDescription(pR->state->getState()));
+    				LoggerAdapter::log(Log::STATUS, message);
+    			}
+    			delete pR->state;
+
+    	//    	pthread_cond_signal(&evm->pingCondition);
+
+    			ClientWatchdogV2* client = evm->getClientByUID(pR->uid);
+    			if (client == nullptr)
+    			{
+    				std::string message = "A client ";
+    				message += pR->uid;
+    				message += " answered the ping signal but is not connected";
+    				LoggerAdapter::log(Log::SEVERE, message);
+    			}
+    			else
+    			{
+    				client->set();
+    				#ifdef DEBUG_OUT
+    				printf("getStatus(): client %s responded", pR->uid);
+    				#endif //DEBUG_OUT
+    			}
+    			free(pR->uid);
+    			free(pR);
+
+        	}
     	}
     }
 
-    free(uid);
     free(arg);
+    free(uid);
     pthread_cleanup_pop(0);
     pthread_cleanup_pop(0);
     return (void*) 0;
@@ -170,28 +205,37 @@ void* checkStatus(void* arg)
 
     while (*run)
     {
-    	printf("Checking status\n");
+		#ifdef DEBUG_OUT
+		printf("Checking status\n");
+		#endif //DEBUG_OUT
     	pthread_mutex_lock(&evm->clientMutex);
     	ClientMap* cmap = new ClientMap(*(evm->clients));
     	pthread_mutex_unlock(&evm->clientMutex);
 
     	for (ClientPair pair : *cmap)
     	{
-    		for (ClientWatchdog* c : *(pair.second))
+    		for (ClientWatchdogV2* c : *(pair.second))
     		{
-    			if ( (c->didRespondInTime()) )
+    			if (c != nullptr)
     			{
-    				printf("true\n");
-    				evm->master.send(data, pingTelegram.getSerializedSize(), c->getClientAddress());
-    			}
-    			else
-    			{
-    				printf("removing %s\n", c->getClientAddress()->getUniqueID());
-    				std::string message = "Client ";
-    				message.append(c->getClientAddress()->getUniqueID());
-    				message.append(" timeout");
-    				LoggerAdapter::log(Log::WARNING, message);
-    				evm->removeClient(c->getClientAddress()->getUniqueID(), c->getClientAddress());
+					if ( !(c->isTriggered()) )
+					{
+						#ifdef DEBUG_OUT
+						printf("in checkStatus(): client %s has time left\n", c->getClientAddress()->getUniqueID());
+						#endif //DEBUG_OUT
+						evm->master.send(data, pingTelegram.getSerializedSize(), c->getClientAddress());
+					}
+					else
+					{
+						#ifdef DEBUG_OUT
+						printf("in checkStatus(): client %s did not respond in time\n", c->getClientAddress()->getUniqueID());
+						#endif //DEBUG_OUT
+						std::string message = "Client ";
+						message.append(c->getClientAddress()->getUniqueID());
+						message.append(" timeout");
+						LoggerAdapter::log(Log::WARNING, message);
+						evm->removeClient(c->getClientAddress()->getUniqueID(), c->getClientAddress());
+					}
     			}
     		}
     	}
@@ -235,6 +279,11 @@ void* checkForMessage(void* arg)
         telegram.deserialize(data);
 
 #ifdef DEBUG_OUT
+        printf("checkForMessage()_%s: received from %s to %s\n"
+        		"----------------\n", local ? "local" : "network", telegram.getSourceID(), telegram.getDestinationID());
+#endif //DEBUG_OUT
+
+#ifdef DEBUG_TELEGRAM_OUT
         unsigned char* data1 = (unsigned char*) ((threadArgument*)arg)->dataPointer;
 		printf("Contents of Telegram:\n");
 		for (int i=0; i<bytes; i+=1)
@@ -253,7 +302,7 @@ void* checkForMessage(void* arg)
 
 		}
 		printf("\n");
-#endif //DEBUG_OUT
+#endif //DEBUG_TELEGRAM_OUT
 
 		if (stringCompare(cropID(telegram.getDestinationID()).c_str(), Telegram::ID_MASTER.c_str()))
 		{
@@ -312,14 +361,18 @@ void* checkForMessage(void* arg)
 			}
 			case TELEGRAM_PING: {
 				Telegram_Object* statusTelegram = new Telegram_Object();
+				EventSystemMaster::pingResponse* pR = (EventSystemMaster::pingResponse*) malloc(sizeof(EventSystemMaster::pingResponse));
+				pR->state = new StateObject();
+				pR->uid = (char*)malloc(UNIQUEID_SIZE);
+				statusTelegram->deserialize(data, pR->state);
+				memcpy(pR->uid, statusTelegram->getSourceID(), UNIQUEID_SIZE);
 				pthread_mutex_lock(&evm->pingMutex);
-				statusTelegram->deserialize(data, evm->currStatusPingResponse);
-				memcpy(evm->currUIDPingResponse, telegram.getSourceID(), UNIQUEID_SIZE);
+				evm->pushResponse(pR);
 				pthread_cond_signal(&evm->pingCondition);
-				struct timespec t;
-				clock_gettime(CLOCK_REALTIME, &t);
-				t.tv_nsec += 500;
-				pthread_cond_timedwait(&evm->pingCondition, &evm->pingMutex, &t);
+//				struct timespec t;
+//				clock_gettime(CLOCK_REALTIME, &t);
+//				t.tv_nsec += 500;
+//				pthread_cond_timedwait(&evm->pingCondition, &evm->pingMutex, &t);
 				pthread_mutex_unlock(&evm->pingMutex);
 				//pthread_yield();
 
@@ -334,7 +387,9 @@ void* checkForMessage(void* arg)
 		}
 		else
 		{
+			#ifdef DEBUG_OUT
 			printf("Sending to %s, isUniqueID: %s\n", telegram.getDestinationID(), telegram.isUniqueDestination() ? "true" : "false");
+			#endif //DEBUG_OUT
 			evm->sendToClient(telegram.getDestinationID(), telegram.isUniqueDestination(), data, bytes);
 		}
 
@@ -360,6 +415,9 @@ EventSystemMaster::EventSystemMaster(char* networkDevice) : master(networkDevice
 void EventSystemMaster::init()
 {
     printf("EventSystemMaster(): building Master...\n");
+
+	this->responseNrs = 0;
+
     this->master.broadcast();
     this->id = "MASTER";
 
@@ -373,7 +431,7 @@ void EventSystemMaster::init()
 
     this->currStatusPingResponse = new StateObject();
 
-    ClientWatchdog::setResponseTime(15);
+//    ClientWatchdogV2::setResponseTime(15);
 
     pthread_mutex_init(&this->clientMutex, NULL);
     pthread_mutex_init(&this->pingMutex, NULL);
@@ -495,7 +553,7 @@ EventSystemMaster::~EventSystemMaster()
     int bytes = quitTelegram->serialize(this->dataPointer);
 	for (ClientPair res : *(this->clients))
 	{
-		for (ClientWatchdog* c : *res.second)
+		for (ClientWatchdogV2* c : *res.second)
 		{
 			this->sendToClient(c->getClientAddress()->getUniqueID(), true, this->dataPointer, bytes);
 			delete c;
@@ -548,14 +606,16 @@ void EventSystemMaster::addClient(std::string id, SocketAddress* address)
 	if (result == this->clients->end())
 	{
 		ClientVector* vec = new ClientVector();
-		ClientWatchdog* cwd = new ClientWatchdog(newAddress);
+		ClientWatchdogV2* cwd = new ClientWatchdogV2(newAddress, 15, 0);
+		cwd->set();
 		vec->push_back(cwd);
 		ClientPair entry(id, vec);
 		this->clients->insert(entry);
 	}
 	else
 	{
-		ClientWatchdog* cwd = new ClientWatchdog(newAddress);
+		ClientWatchdogV2* cwd = new ClientWatchdogV2(newAddress, 15, 0);
+		cwd->set();
 		result->second->push_back(cwd);
 	}
     if (stringCompare(id.c_str(), id_logger))
@@ -579,7 +639,7 @@ void EventSystemMaster::removeClient(std::string uid, SocketAddress* address)
 	else
 	{
 		unsigned int i = 0;
-		for (ClientWatchdog* client : *(result->second))
+		for (ClientWatchdogV2* client : *(result->second))
 		{
 			if ( stringCompare( client->getClientAddress()->getUniqueID(), uid.c_str() ) )
 			{
@@ -607,9 +667,9 @@ void EventSystemMaster::removeClient(std::string uid, SocketAddress* address)
 }
 
 
-ClientWatchdog* EventSystemMaster::getClientByUID(std::string uid)
+ClientWatchdogV2* EventSystemMaster::getClientByUID(std::string uid)
 {
-	ClientWatchdog* clientResult = nullptr;
+	ClientWatchdogV2* clientResult = nullptr;
 	pthread_mutex_lock(&this->clientMutex);
 	ClientMap::const_iterator result = this->clients->find(cropID(uid));
 	if (result == this->clients->end())
@@ -618,7 +678,7 @@ ClientWatchdog* EventSystemMaster::getClientByUID(std::string uid)
 	}
 	else
 	{
-		for (ClientWatchdog* client : *(result->second))
+		for (ClientWatchdogV2* client : *(result->second))
 		{
 			if ( stringCompare( client->getClientAddress()->getUniqueID(), uid.c_str() ) )
 			{
@@ -651,12 +711,12 @@ void EventSystemMaster::sendToClient(std::string destination, bool isUniqueID, v
 	}
 	else
 	{
-		for (ClientWatchdog* client : *(result->second))
+		for (ClientWatchdogV2* client : *(result->second))
 		{
 
 			if (isUniqueID)
 			{
-				if (stringCompare(client->getClientAddress()->getUniqueID(), cropUID(destination).c_str()))
+				if (stringCompare(client->getClientAddress()->getUniqueID(), destination.c_str()))
 				{
 					this->master.send(data, numOfBytes, client->getClientAddress());
 					error = false;
@@ -701,6 +761,31 @@ void EventSystemMaster::dekrementConnectedLogger()
 {
 	if (this->nLoggerConnected > 0)
 		this->nLoggerConnected -= 1;
+}
+
+EventSystemMaster::pingResponse* EventSystemMaster::popResponse()
+{
+	printf("in EventSystemMaster::popResponse: responseNr %d\n", this->responseNrs-1);
+	if (this->responseNrs > 0)
+	{
+		this->responseNrs -= 1;
+		return this->responseStack[this->responseNrs];
+	}
+	else
+		return nullptr;
+}
+void EventSystemMaster::pushResponse(EventSystemMaster::pingResponse* response)
+{
+	this->responseStack[this->responseNrs] = response;
+	this->responseNrs += 1;
+	printf("in EventSystemMaster::pushResponse: responseNr %d\n", this->responseNrs);
+	if (this->responseNrs >= 20)
+		fprintf(stderr, "Warning: Response Stack overflow\n");
+}
+
+int EventSystemMaster::getResponseNrs()
+{
+	return this->responseNrs;
 }
 
 } /* namespace EventSystem */

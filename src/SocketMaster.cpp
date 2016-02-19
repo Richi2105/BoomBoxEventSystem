@@ -79,15 +79,17 @@ void Socket_Master::broadcast()
 #endif //RASPBERRY
 
 
+    ((SocketAddressLocal*)this->localSocket->getAddress())->serialize(mapAddress);
+/*
     SocketAddressLocal* esaddress = (SocketAddressLocal*) mapAddress;
     struct sockaddr_un* sockaddr = (sockaddr_un*) ((this->localSocket->getAddress()->getAddress()));
 
     esaddress->setAddress(*sockaddr, this->localSocket->getAddress()->getLen());
-
+*/
 //    printf("path to me: %s, with len %d\n", ((sockaddr_un*)((SocketAddressLocal*)mapAddress)->getAddress())->sun_path, esaddress->getLen());
 
 #ifdef RASPBERRY
-
+    shmdt(mapAddress);
 #else
 	munmap(mapAddress, sizeof(SocketAddressLocal));
 #endif //RASPBERRY
@@ -115,12 +117,16 @@ int Socket_Master::send(void* data, int numOfBytes, SocketAddress* dest)
 
 int Socket_Master::send(void* data, int numOfBytes, SocketAddressLocal* dest)
 {
-    printf("Sending to: %s\n", ((sockaddr_un*)dest->getAddress())->sun_path);
+	#ifdef DEBUG_OUT
+	printf("Sending to: %s\n", ((sockaddr_un*)dest->getAddress())->sun_path);
+	#endif //DEBUG_OUT
     return sendto(this->localSocket->getSocketFileDescriptor(), data, numOfBytes, 0, dest->getAddress(), dest->getLen());
 }
 
 int Socket_Master::send(void* data, int numOfBytes, SocketAddressNetwork* dest)
 {
-    printf("Sending to: %d\n", ((sockaddr_in*)dest->getAddress())->sin_addr.s_addr);
+	#ifdef DEBUG_OUT
+	printf("Sending to: %d\n", ((sockaddr_in*)dest->getAddress())->sin_addr.s_addr);
+	#endif //DEBUG_OUT
     return sendto(this->networkSocket->getSocketFileDescriptor(), data, numOfBytes, 0, dest->getAddress(), dest->getLen());
 }

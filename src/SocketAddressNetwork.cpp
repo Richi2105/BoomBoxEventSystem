@@ -12,8 +12,10 @@
 
 SocketAddressNetwork::SocketAddressNetwork(sockaddr_in address, socklen_t len, std::string uid)
 {
+	#ifdef DEBUG_OUT
 	printf("Creating SocketAddressLocal(sockaddr_in)\n"
 			"Parameter: %x", address.sin_addr.s_addr);
+	#endif //DEBUG_OUT
     this->address = address;
     this->len = len;
     this->addressSize = sizeof(int8_t) + sizeof(socklen_t) + sizeof(sockaddr_in);
@@ -23,7 +25,9 @@ SocketAddressNetwork::SocketAddressNetwork(sockaddr_in address, socklen_t len, s
 
 SocketAddressNetwork::SocketAddressNetwork()
 {
+	#ifdef DEBUG_OUT
 	printf("Creating SocketAddressNetwork()\n");
+	#endif //DEBUG_OUT
     memset(&(this->address), 0, sizeof(sockaddr_in));
     this->len = 0;
     this->addressSize = sizeof(int8_t) + sizeof(socklen_t) + sizeof(sockaddr_in);

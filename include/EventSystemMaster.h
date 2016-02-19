@@ -7,7 +7,7 @@
 #include "EventSystemParticipant.h"
 #include "SocketAddress.h"
 #include "Telegram/Telegram.h"
-#include "Watchdog/ClientWatchdog.h"
+#include "Watchdog/ClientWatchdogV2.h"
 #include "StateMachine/StateObject.h"
 
 #include <vector>
@@ -23,7 +23,7 @@ namespace EventSystem
  * stores references to all clients either network-y or locally inside a ClientWatchdog-Object
  * for easier accessing all clients
  */
-typedef std::vector<ClientWatchdog*> ClientVector;
+typedef std::vector<ClientWatchdogV2*> ClientVector;
 
 typedef std::vector<SocketAddressLocal*> LocalClientVector;
 typedef std::vector<SocketAddressNetwork*> NetworkClientVector;
@@ -91,7 +91,7 @@ public:
 	void removeClient(std::string id, SocketAddress* address);
 
 	//clientMutex lock
-	inline ClientWatchdog* getClientByUID(std::string uid);
+	inline ClientWatchdogV2* getClientByUID(std::string uid);
 
 	//clientMutex lock
 	void sendToClient(std::string destination, bool isUniqueID, void* data, int numOfBytes);
@@ -115,9 +115,23 @@ public:
     StateObject* currStatusPingResponse;
 
     Socket_Master master;
+
+    struct pingResponse {
+    	char* uid;
+    	StateObject* state;
+    };
+
+    EventSystemMaster::pingResponse* popResponse();
+    void pushResponse(EventSystemMaster::pingResponse* response);
+    int getResponseNrs();
+
+
 protected:
 private:
 	void init();
+
+	pingResponse* responseStack[20];
+	int responseNrs;
 
     pthread_t local_messageThreadID;
     pthread_t network_messageThreadID;

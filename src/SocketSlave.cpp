@@ -47,7 +47,7 @@ Socket_Slave::~Socket_Slave()
 int Socket_Slave::send(void* data, int numOfBytes)
 {
 
-#ifdef DEBUG_OUT
+#ifdef DEBUG_TELEGRAM_OUT
 	unsigned char* data1 = (unsigned char*) data;
 	printf("Contents of Telegram\n");
 	for (int i=0; i<numOfBytes; i+=1)
@@ -64,14 +64,15 @@ int Socket_Slave::send(void* data, int numOfBytes)
 			printf("\n");
 		}
 	}
-#endif //DEBUG_OUT
+	printf("\n");
+#endif //DEBUG_TELEGRAM_OUT
     return sendto(this->socket->getSocketFileDescriptor(), data, numOfBytes, 0, this->masterAddress->getAddress(), this->masterAddress->getLen());
 }
 
 int Socket_Slave::receive(void* data, int numOfBytes)
 {
 	int bytes = this->socket->receive(data, numOfBytes);
-#ifdef DEBUG_OUT
+#ifdef DEBUG_TELEGRAM_OUT
 	unsigned char* data1 = (unsigned char*) data;
 	printf("Contents of Telegram\n");
 	for (int i=0; i<bytes; i+=1)
@@ -87,9 +88,9 @@ int Socket_Slave::receive(void* data, int numOfBytes)
 		{
 			printf("\n");
 		}
-
 	}
-#endif //DEBUG_OUT
+	printf("\n");
+#endif //DEBUG_TELEGRAM_OUT
 	return bytes;
 }
 
@@ -149,7 +150,8 @@ void Socket_Slave::getAddressFromSharedMemory(SocketAddressLocal** address)
 	}
 	printf("mapAddress: %p\n", mapAddress);
 
-	(*address) = new SocketAddressLocal(*(SocketAddressLocal*) mapAddress);
+	(*address) = new SocketAddressLocal();
+	(*address)->deserialize(mapAddress);
 
 	printf("%s\n", ((sockaddr_un*)(*address)->getAddress())->sun_path);
 

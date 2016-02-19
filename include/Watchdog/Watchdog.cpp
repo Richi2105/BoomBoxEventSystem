@@ -29,7 +29,9 @@ void Watchdog::set()
 	}
 	else
 	{
+		#ifdef DEBUG_OUT
 		printf("Watchdog::set()\n");
+		#endif //DEBUG_OUT
 		this->triggerTime.tv_nsec += this->millisec * 1000;
 		this->triggerTime.tv_sec += this->sec;
 	}
